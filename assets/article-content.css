@@ -215,3 +215,36 @@
   color: var(--gold);
   font-weight: 700;
 }
+
+/* VIP tier table */
+.vip-tier-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+  margin: 1.2rem 0;
+}
+
+.vip-tier-table th,
+.vip-tier-table td {
+  padding: 0.6rem 0.4rem;
+  text-align: right;
+}
+
+.vip-tier-table th {
+  text-align: left;
+  color: var(--gold);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.vip-tier-table td:first-child {
+  text-align: left;
+}
+
+.vip-tier-table tbody tr:nth-child(odd) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.vip-tier-table-wrap {
+  overflow-x: auto;
+  margin: 1.2rem 0;
+}

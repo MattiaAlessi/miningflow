@@ -1287,6 +1287,13 @@ body {
   color: var(--gold);
 }
 
+.article .lead {
+  font-size: 1.1rem;
+  color: var(--text2);
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+}
+
 .article p,
 .article li {
   color: var(--text2);
@@ -1727,4 +1734,53 @@ body {
   .cards {
     grid-template-columns: 1fr 1fr;
   }
+}
+
+/* Guides index */
+.guide-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.guide-card {
+  display: block;
+  padding: 1.2rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--card-border);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease;
+}
+
+.guide-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.guide-card-title {
+  font-family: var(--heading);
+  font-weight: 600;
+  margin: 0 0 0.4rem;
+  color: var(--text1);
+  font-size: 1rem;
+}
+
+.guide-card-desc {
+  font-size: 0.85rem;
+  color: var(--text2);
+  line-height: 1.45;
+  margin: 0;
+}
+
+.guide-card-tag {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--gold);
 }
