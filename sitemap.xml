@@ -135,6 +135,24 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://miningflow.github.io/gomining-optimizer.html</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://miningflow.github.io/gomining-roi-calculator.html</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://miningflow.github.io/gomining-worth-it-now.html</loc>
+    <lastmod>2026-07-25</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
     <loc>https://miningflow.github.io/privacy.html</loc>
     <lastmod>2026-07-25</lastmod>
     <changefreq>monthly</changefreq>
