@@ -561,6 +561,34 @@ body {
   font-size: 0.75rem;
 }
 
+/* TradingView advanced charts */
+.advanced-charts-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1.4rem;
+}
+
+.tv-chart-wrap {
+  position: relative;
+  min-height: 360px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--card-border);
+  background: var(--surface);
+}
+
+.tv-chart-container {
+  height: 360px;
+  width: 100%;
+}
+
+@media (max-width: 900px) {
+  .advanced-charts-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
 /* Breakdown */
 .breakdown {
   padding: 1.1rem 1.5rem 1.5rem;

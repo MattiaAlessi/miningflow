@@ -2148,6 +2148,59 @@
     }
   });
 
+  // ---- Advanced TradingView charts ----
+  const TV_SYMBOLS = {
+    btc: 'BITSTAMP:BTCUSD',
+    gmt: 'BINANCE:GMTUSDT'
+  };
+
+  function initTradingView(containerId, symbol) {
+    if (!window.TradingView || !window.TradingView.widget) return;
+    const container = $(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    new TradingView.widget({
+      container_id: containerId,
+      autosize: true,
+      symbol: symbol,
+      interval: '60',
+      timezone: 'Etc/UTC',
+      theme: 'dark',
+      style: '1',
+      locale: 'en',
+      toolbar_bg: '#0a0a0a',
+      enable_publishing: false,
+      hide_top_toolbar: false,
+      hide_side_toolbar: false,
+      withdateranges: true,
+      allow_symbol_change: false,
+      save_image: true
+    });
+  }
+
+  function loadTradingViewScript() {
+    return new Promise((resolve, reject) => {
+      if (window.TradingView) { resolve(); return; }
+      const s = document.createElement('script');
+      s.src = 'https://s3.tradingview.com/tv.js';
+      s.async = true;
+      s.onload = () => resolve();
+      s.onerror = () => reject(new Error('TradingView script failed'));
+      document.head.appendChild(s);
+    });
+  }
+
+  function initAdvancedCharts() {
+    loadTradingViewScript()
+      .then(() => {
+        initTradingView('tvChartBTC', TV_SYMBOLS.btc);
+        initTradingView('tvChartGMT', TV_SYMBOLS.gmt);
+      })
+      .catch(() => {
+        showToast('Advanced charts could not be loaded');
+      });
+  }
+
   async function init() {
     await fetchExchangeRates();
     updateTicker();
@@ -2172,6 +2225,20 @@
     render();
     renderPlanner();
     renderCharts();
+    (() => {
+      const advSection = $('advancedCharts');
+      if (advSection && 'IntersectionObserver' in window) {
+        const tvObserver = new IntersectionObserver((entries) => {
+          if (entries[0].isIntersecting) {
+            initAdvancedCharts();
+            tvObserver.disconnect();
+          }
+        }, { rootMargin: '200px' });
+        tvObserver.observe(advSection);
+      } else {
+        initAdvancedCharts();
+      }
+    })();
     loadBtcRainbow();
     let rbResizeTimer;
     window.addEventListener('resize', () => {
