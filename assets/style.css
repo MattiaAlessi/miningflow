@@ -1,21 +1,23 @@
 /* MiningFlow v1.7 — Luxury Dark */
 
 :root {
-  --bg: #000000;
+  --bg: #09090b;
   --bg-2: #050505;
   --surface: #0a0a0a;
   --surface-raised: #111111;
   --card: #0a0a0a;
+  --card-glass: rgba(255, 255, 255, 0.015);
   --card-border: rgba(255, 255, 255, 0.08);
+  --focus-ring: rgba(212, 175, 55, 0.2);
   --text1: #ffffff;
   --text2: #a1a1a1;
   --text3: #6b6b6b;
-  --gold: #e8c46c;
-  --gold-light: #f0d99a;
+  --gold: #d4af37;
+  --gold-light: #e5c76b;
   --green: #22c55e;
   --red: #ef4444;
   --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --heading: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --heading: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --mono: 'JetBrains Mono', 'SF Mono', ui-monospace, monospace;
   --radius: 14px;
   --radius-sm: 10px;
@@ -37,7 +39,7 @@ body {
   background: var(--bg);
   color: var(--text1);
   min-height: 100vh;
-  line-height: 1.55;
+  line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -48,8 +50,8 @@ body {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at 80% 0%, rgba(232, 196, 108, 0.06), transparent 35%),
-    radial-gradient(circle at 20% 100%, rgba(255, 255, 255, 0.03), transparent 35%);
+    radial-gradient(circle at 75% 0%, rgba(212, 175, 55, 0.04), transparent 45%),
+    radial-gradient(circle at 25% 100%, rgba(255, 255, 255, 0.025), transparent 45%);
   pointer-events: none;
   z-index: -1;
 }
@@ -140,7 +142,7 @@ body {
   font-size: clamp(2.4rem, 6vw, 4rem);
   font-weight: 700;
   line-height: 1.05;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.04em;
   margin: 0 0 1rem;
   color: var(--text1);
 }
@@ -217,28 +219,22 @@ body {
 
 .card {
   position: relative;
-  padding: 1.4rem;
+  padding: 1.6rem;
   border-radius: var(--radius);
-  background: var(--card);
+  background: var(--card-glass);
   border: 1px solid var(--card-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow);
-  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.25s ease;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06), 0 20px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
 }
 
-.card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.1);
-}
-
 .card:hover {
-  transform: translateY(-3px);
-  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-4px) scale(1.01);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08), 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05);
 }
 
 .card-label {
@@ -275,9 +271,11 @@ body {
 /* Panel */
 .panel {
   border-radius: var(--radius);
-  background: var(--card);
+  background: var(--card-glass);
   border: 1px solid var(--card-border);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), var(--shadow);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.06), 0 20px 50px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   overflow: hidden;
 }
 
@@ -285,7 +283,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1.2rem 1.5rem;
+  padding: 1.4rem 1.75rem;
   border-bottom: 1px solid var(--card-border);
   background: rgba(255, 255, 255, 0.015);
 }
@@ -305,7 +303,7 @@ body {
 
 /* Form */
 .form {
-  padding: 1.5rem;
+  padding: 1.75rem;
   display: flex;
   flex-direction: column;
   gap: 1.2rem;
@@ -358,6 +356,7 @@ body {
 .field-wrap input:focus {
   border-color: rgba(255, 255, 255, 0.25);
   background: rgba(255, 255, 255, 0.05);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .field-wrap select {
@@ -485,7 +484,7 @@ body {
 }
 
 .toggle input:focus + .toggle-slider {
-  box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.18);
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 /* Buttons */
@@ -515,13 +514,13 @@ body {
 
 .btn-primary {
   color: #000000;
-  background: var(--gold);
-  border-color: var(--gold);
+  background: linear-gradient(135deg, var(--gold) 0%, var(--gold-light) 100%);
+  border-color: transparent;
 }
 
 .btn-primary:hover {
-  background: var(--gold-light);
-  border-color: var(--gold-light);
+  background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+  border-color: transparent;
 }
 
 .btn-secondary {
