@@ -1,0 +1,217 @@
+/* MiningFlow article-content.css — styles for migrated SEO content pages */
+
+.article .lead {
+  font-size: 1.12rem;
+  color: var(--text2);
+  line-height: 1.65;
+  margin-bottom: 1.2rem;
+}
+
+.article .updated {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text3);
+  margin-bottom: 1.4rem;
+}
+
+/* Stat cards */
+.article .stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.85rem;
+  margin: 1.4rem 0;
+}
+
+.article .stat {
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.article .stat:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  transform: translateY(-2px);
+}
+
+.article .stat .k {
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text3);
+  margin-bottom: 0.35rem;
+}
+
+.article .stat .v {
+  font-family: var(--mono);
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1.2;
+}
+
+.article .stat .s {
+  font-size: 0.72rem;
+  color: var(--text3);
+  margin-top: 0.25rem;
+}
+
+/* Scenario boxes */
+.article .scenario {
+  margin: 1.4rem 0;
+  padding: 1.2rem 1.4rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-left: 3px solid var(--gold);
+  color: var(--text2);
+  line-height: 1.65;
+}
+
+.article .scenario .big {
+  display: block;
+  font-family: var(--mono);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gold);
+  margin: 0.4rem 0 0.35rem;
+}
+
+.article .scenario .src {
+  display: block;
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  color: var(--text3);
+  margin-top: 0.6rem;
+  line-height: 1.45;
+}
+
+/* Formula block */
+.article .formula {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  color: var(--gold);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: 1rem 1.2rem;
+  margin: 1rem 0 1.2rem;
+  overflow-x: auto;
+  line-height: 1.55;
+  white-space: pre-wrap;
+}
+
+/* CTA band */
+.article .cta {
+  margin: 2rem 0;
+  padding: 1.6rem 1.4rem;
+  border-radius: var(--radius);
+  background: linear-gradient(135deg, rgba(245, 166, 35, 0.12), rgba(245, 166, 35, 0.03));
+  border: 1px solid rgba(245, 166, 35, 0.2);
+  text-align: center;
+}
+
+.article .cta h3 {
+  color: var(--text1);
+  font-size: 1.15rem;
+  margin: 0 0 0.5rem;
+}
+
+.article .cta p {
+  color: var(--text2);
+  margin: 0 0 0.75rem;
+}
+
+.article .cta .code {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--gold);
+  background: rgba(245, 166, 35, 0.14);
+  border: 1px solid rgba(245, 166, 35, 0.25);
+  padding: 0.12rem 0.55rem;
+  border-radius: 6px;
+  letter-spacing: 0.05em;
+}
+
+.article .cta .btn {
+  margin-top: 0.75rem;
+}
+
+/* FAQ details */
+.article .faq {
+  margin-top: 1rem;
+}
+
+.article .faq details {
+  margin-bottom: 0.75rem;
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: border-color 0.2s ease;
+}
+
+.article .faq details:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.article .faq summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text1);
+  list-style: none;
+}
+
+.article .faq summary::-webkit-details-marker {
+  display: none;
+}
+
+.article .faq summary::after {
+  content: '+';
+  float: right;
+  color: var(--gold);
+  font-family: var(--mono);
+}
+
+.article .faq details[open] summary::after {
+  content: '−';
+}
+
+.article .faq details p {
+  margin: 0.7rem 0 0;
+  color: var(--text2);
+}
+
+/* Related links */
+.article .related {
+  margin-top: 2.2rem;
+  font-size: 0.95rem;
+  color: var(--text2);
+}
+
+.article .related a {
+  color: var(--gold);
+}
+
+/* Inline promo code box helper */
+.promo-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 1.2rem 0;
+  padding: 0.85rem 1.1rem;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-sm);
+  font-family: var(--mono);
+  font-size: 1.05rem;
+}
+
+.promo-box .code {
+  color: var(--gold);
+  font-weight: 700;
+}

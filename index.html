@@ -42,6 +42,7 @@
     <div class="nav-links">
       <a class="nav-link" href="claim/">Claim TH</a>
       <a class="nav-link" href="how-gomining-works.html">How it works</a>
+      <a class="nav-link" href="gomining-discount-explained.html">Guides</a>
       <a class="nav-link" href="faq.html">FAQ</a>
       <a class="nav-link" href="#donate">Donate</a>
       <button type="button" class="btn btn-small" id="navTourBtn">🚀 Tour</button>
@@ -380,6 +381,22 @@
             <div class="chart-error" id="gmtChartError">Chart temporarily unavailable</div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section class="panel reveal" id="rainbowChart">
+      <div class="panel-head">
+        <h2 class="panel-title">Bitcoin Rainbow Chart</h2>
+        <span class="panel-hint">Power-Law valuation bands</span>
+      </div>
+      <div class="rainbow-wrap" id="btcRainbowWrap">
+        <div class="btc-rainbow-legend" id="btcRainbowLegend" aria-label="Rainbow bands"></div>
+        <div class="chart-wrapper rainbow-chart-wrapper">
+          <canvas id="btcRainbowCanvas" role="img" aria-label="Bitcoin Rainbow Chart showing power-law valuation bands"></canvas>
+          <div class="btc-rainbow-msg" id="btcRainbowMsg" aria-live="polite">Loading price history…</div>
+        </div>
+        <div class="btc-rainbow-tip" id="btcRainbowTip"></div>
+        <div class="btc-rainbow-foot" id="btcRainbowFoot">Scroll to zoom, drag to pan, double-click to reset.</div>
       </div>
     </section>
 
