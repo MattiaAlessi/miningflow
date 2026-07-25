@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Frequently asked questions about MiningFlow and GoMining — profit calculation, fees, VIP tiers, GMT staking, and more.">
+  <meta name="keywords" content="MiningFlow FAQ, GoMining FAQ, mining calculator, GMT staking, VIP tier, fees">
+  <title>FAQ — MiningFlow</title>
+  <link rel="canonical" href="https://miningflow.github.io/faq.html">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="./" aria-label="MiningFlow home">
+      <span class="brand-icon" aria-hidden="true">🌊</span>
+      <span class="brand-text">MiningFlow</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="claim/">Claim TH</a>
+      <a class="nav-link" href="./">Calculator</a>
+      <a class="nav-link" href="how-gomining-works.html">How it works</a>
+    </div>
+  </nav>
+
+  <main class="article">
+    <h1>Frequently Asked Questions</h1>
+
+    <h2>Is MiningFlow free?</h2>
+    <p>Yes. MiningFlow is an open-source, ad-free calculator. No account or payment is required to use it.</p>
+
+    <h2>Where does the data come from?</h2>
+    <p>BTC price, GMT price, and network difficulty are fetched live from public APIs (CoinPaprika, CoinGecko, and mempool.space). If an API fails, MiningFlow falls back to sensible default values.</p>
+
+    <h2>Is the profit estimate guaranteed?</h2>
+    <p>No. MiningFlow gives an estimate based on current BTC price, difficulty, and GoMining's fee structure. Actual results depend on network difficulty changes, BTC price volatility, and GoMining's terms.</p>
+
+    <h2>What is "Pay in GMT"?</h2>
+    <p>Paying fees in GMT gives an 8% reduction on gross electricity and service fees. Toggle it to see how it changes your net profit.</p>
+
+    <h2>What is the click streak bonus?</h2>
+    <p>GoMining rewards daily logins with a small loyalty boost. MiningFlow approximates this as a 0.5% daily-net increase when the toggle is enabled.</p>
+
+    <h2>How does the Capital Planner work?</h2>
+    <p>The Capital Planner runs a greedy allocator across four strategies — locking GMT, buying 15 W/TH upgrades, buying 12 W/TH miners, and upgrading efficiency — and picks the combination that gives the highest monthly uplift for your budget.</p>
+
+    <h2>Can I share my setup?</h2>
+    <p>Yes. Click "Copy share link" in the Your Setup panel to copy a URL that includes your current inputs. Anyone opening that link will see the same setup.</p>
+
+    <h2>How do I support MiningFlow?</h2>
+    <p>Use the referral code <strong>ZG54KF1</strong> when signing up on GoMining, or donate BTC/ETH to the addresses on the <a href="./">calculator page</a>.</p>
+
+    <div class="cta">
+      <a class="btn btn-primary" href="./">🚀 Open the Calculator</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 MiningFlow · MIT License · Not financial advice.</p>
+  </footer>
+</body>
+</html>

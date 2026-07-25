@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="New to GoMining? Sign up with MiningFlow referral code ZG54KF1 and claim your funded first TH.">
+  <meta name="keywords" content="GoMining, funded first TH, referral, ZG54KF1, free TH">
+  <meta name="author" content="MiningFlow">
+  <link rel="canonical" href="/claim/">
+  <meta property="og:title" content="Claim Your Funded First TH — MiningFlow">
+  <meta property="og:description" content="Sign up with code ZG54KF1 and get your first TH funded.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MiningFlow">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Claim Your Funded First TH — MiningFlow">
+  <meta name="twitter:description" content="Sign up with code ZG54KF1 and get your first TH funded.">
+  <title>Claim Your Funded First TH — MiningFlow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../assets/style.css">
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="../" aria-label="MiningFlow home">
+      <span class="brand-icon" aria-hidden="true">🌊</span>
+      <span class="brand-text">MiningFlow</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="./">Claim TH</a>
+      <a class="nav-link" href="../how-gomining-works.html">How it works</a>
+      <a class="nav-link" href="../faq.html">FAQ</a>
+      <a class="nav-link" href="../#donate">Donate</a>
+    </div>
+  </nav>
+
+  <main class="article">
+    <header>
+      <span class="tag"><span class="dot"></span>New user offer</span>
+      <h1>Claim your <span class="tier">funded first TH</span></h1>
+      <p class="lead">New to GoMining? Sign up with referral code <strong class="referral-code-inline">ZG54KF1</strong> for +5% bonus TH on your first miner, then claim your first TH funded by us.</p>
+    </header>
+
+    <section class="panel" id="how-it-works">
+      <div class="panel-head">
+        <h2 class="panel-title">How it works</h2>
+      </div>
+      <ol class="steps">
+        <li><strong>Sign up</strong> at GoMining with code <strong>ZG54KF1</strong> — you get +5% bonus TH instantly.</li>
+        <li><strong>Fill the form below</strong> with your GoMining username so we can fund your first TH.</li>
+        <li><strong>Start mining</strong> and use the MiningFlow calculator to plan your next moves.</li>
+      </ol>
+    </section>
+
+    <section class="panel" id="claim-form">
+      <div class="panel-head">
+        <h2 class="panel-title">Claim form</h2>
+        <span class="panel-hint">We will be in touch shortly</span>
+      </div>
+      <form class="form claim-form" id="claimForm" novalidate>
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">Your name or handle</span>
+            <span class="field-wrap">
+              <input type="text" id="claimName" name="name" required placeholder="Satoshi">
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">GoMining username</span>
+            <span class="field-wrap">
+              <input type="text" id="claimUser" name="gomining_username" required placeholder="your_username">
+            </span>
+          </label>
+        </div>
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">Best way to reach you</span>
+            <span class="field-wrap">
+              <input type="text" id="claimContact" name="contact" required placeholder="email, Telegram or X">
+            </span>
+          </label>
+        </div>
+        <label class="field">
+          <span class="field-label">Anything else?</span>
+          <span class="field-wrap">
+            <textarea id="claimMsg" name="message" rows="4" placeholder="Optional message"></textarea>
+          </span>
+        </label>
+        <div class="claim-actions">
+          <button type="submit" class="btn btn-primary" id="claimSubmit">Open in Telegram</button>
+          <a class="btn btn-secondary" href="https://gomining.com/?ref=ZG54KF1" target="_blank" rel="noopener">Sign up with ZG54KF1 →</a>
+        </div>
+        <p class="claim-status" id="claimStatus" role="status" aria-live="polite"></p>
+        <p class="claim-fine">By clicking “Open in Telegram”, a pre-filled message will open in Telegram for you to send to @mattia_ale.</p>
+      </form>
+    </section>
+
+    <div class="cta">
+      <a class="btn btn-secondary" href="../">← Back to calculator</a>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 MiningFlow · MIT License · Not financial advice.</p>
+  </footer>
+
+  <script>
+    const form = document.getElementById('claimForm');
+    const status = document.getElementById('claimStatus');
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!form.reportValidity()) return;
+
+      const name = document.getElementById('claimName').value.trim();
+      const user = document.getElementById('claimUser').value.trim();
+      const contact = document.getElementById('claimContact').value.trim();
+      const msg = document.getElementById('claimMsg').value.trim();
+
+      const lines = [
+        'Hi, I would like to claim my funded first TH.',
+        '',
+        `Name/handle: ${name}`,
+        `GoMining username: ${user}`,
+        `Best way to reach me: ${contact}`,
+        ...(msg ? [`Message: ${msg}`] : []),
+        '',
+        'Referral code used: ZG54KF1'
+      ];
+
+      const text = encodeURIComponent(lines.join('\n'));
+      const link = `https://t.me/mattia_ale?text=${text}`;
+
+      status.textContent = 'Opening Telegram…';
+      status.style.color = 'var(--text2)';
+      window.open(link, '_blank', 'noopener,noreferrer');
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="MiningFlow — Free GoMining profit calculator with live BTC & GMT data, VIP tiers, capital planner, growth projection, and daily breakdown.">
+  <meta name="keywords" content="GoMining, Bitcoin mining, BTC, GMT, profit calculator, mining calculator, TH, W/TH, VIP tier, staking">
+  <meta name="author" content="MiningFlow">
+  <link rel="canonical" href="/">
+  <!-- Open Graph -->
+  <meta property="og:title" content="MiningFlow — GoMining Profit Calculator">
+  <meta property="og:description" content="Free GoMining profit calculator with live BTC & GMT data, VIP tiers, capital planner, growth projection, and daily breakdown.">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="MiningFlow">
+  <!-- Twitter -->
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="MiningFlow — GoMining Profit Calculator">
+  <meta name="twitter:description" content="Free GoMining profit calculator with live BTC & GMT data, VIP tiers, capital planner, growth projection, and daily breakdown.">
+  <title>MiningFlow — GoMining Profit Calculator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/style.css">
+  <noscript>
+    <style>
+      .reveal { opacity: 1 !important; transform: none !important; }
+      .card, .panel, .hero-copy, .ticker { animation: none !important; }
+    </style>
+  </noscript>
+</head>
+<body>
+  <div class="bg-glow"></div>
+
+  <nav class="nav" aria-label="Main">
+    <a class="brand" href="./" aria-label="MiningFlow home">
+      <svg class="brand-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M2 12c2.5-4 5.5-6 9-6s6.5 2 9 6c-2.5 4-5.5 6-9 6s-6.5-2-9-6z"/>
+        <path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+      </svg>
+      <span class="brand-text">MiningFlow</span>
+    </a>
+    <div class="nav-links">
+      <a class="nav-link" href="claim/">Claim TH</a>
+      <a class="nav-link" href="how-gomining-works.html">How it works</a>
+      <a class="nav-link" href="faq.html">FAQ</a>
+      <a class="nav-link" href="#donate">Donate</a>
+      <button type="button" class="btn btn-small" id="navTourBtn">🚀 Tour</button>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <h1 class="hero-title">Maximize your <span>GoMining ROI.</span></h1>
+      <p class="hero-sub">A precise profit calculator for GoMining operators. Live BTC &amp; GMT data, automatic VIP tier detection, and capital allocation insight.</p>
+      <div class="hero-cta">
+        <a href="#setup" class="btn btn-primary">Build your setup</a>
+        <span class="hero-cta-hint">Free. No account required.</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="ticker" aria-label="Live market ticker" aria-live="off">
+    <div class="ticker-row" id="ticker">
+      <span class="ticker-item" data-key="btc">BTC <strong>—</strong></span>
+      <span class="ticker-item" data-key="gmt">GMT <strong>—</strong></span>
+      <span class="ticker-item" data-key="diff">Difficulty <strong>—</strong></span>
+      <span class="ticker-item" data-key="sats">Sats/TH/day <strong>—</strong></span>
+    </div>
+  </section>
+
+  <main class="container">
+    <section class="cards" aria-label="Summary cards">
+      <article class="card hero-card">
+        <div class="card-label">Daily Mining Net</div>
+        <div class="card-value" id="outDailyNet">$0.00</div>
+        <div class="card-sub" id="outDailyBTC">0.00000000 BTC</div>
+      </article>
+      <article class="card hero-card">
+        <div class="card-label">Monthly Estimate</div>
+        <div class="card-value" id="outMonthlyNet">$0.00</div>
+        <div class="card-sub">~30 day projection</div>
+      </article>
+      <article class="card hero-card accent-violet">
+        <div class="card-label">Discount</div>
+        <div class="card-value" id="outDiscount">0%</div>
+        <div class="card-sub">VIP + token coverage</div>
+      </article>
+      <article class="card hero-card accent-gold">
+        <div class="card-label">VIP Tier</div>
+        <div class="card-value tier" id="outTier">Bronze I</div>
+        <div class="card-sub" id="outTierSub">0 TH · 0 GMT</div>
+      </article>
+    </section>
+
+    <section class="panel" id="setup">
+      <div class="panel-head">
+        <h2 class="panel-title">Your Setup</h2>
+        <span class="panel-hint">Edit your farm details</span>
+      </div>
+      <form class="form" id="setupForm" novalidate>
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">Hashrate</span>
+            <span class="field-wrap">
+              <input type="number" id="inTH" value="100" min="0" step="1" placeholder="0">
+              <span class="field-unit">TH</span>
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">Efficiency</span>
+            <span class="field-wrap">
+              <input type="number" id="inWTH" value="15" min="1" step="0.01" placeholder="0">
+              <span class="field-unit">W/TH</span>
+            </span>
+          </label>
+        </div>
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">Locked GMT</span>
+            <span class="field-wrap">
+              <input type="number" id="inLocked" value="0" min="0" step="1" placeholder="0">
+              <span class="field-unit">GMT</span>
+            </span>
+          </label>
+        </div>
+
+        <div class="toggles">
+          <label class="toggle" title="Simulate a 7-day login click streak for extra rewards">
+            <input type="checkbox" id="inStreak" checked>
+            <span class="toggle-slider" aria-hidden="true"></span>
+            <span class="toggle-label">Click streak</span>
+          </label>
+          <label class="toggle" title="Pay fees in GMT for an 8% gross-fee reduction">
+            <input type="checkbox" id="inPayGMT" checked>
+            <span class="toggle-slider" aria-hidden="true"></span>
+            <span class="toggle-label">Pay in GMT</span>
+          </label>
+        </div>
+
+        <section class="advanced-section" aria-label="Advanced options">
+          <p class="advanced-title">Advanced Options</p>
+          <div class="toggles">
+            <label class="toggle" title="I own a Greedy Machine (passive weekly TH growth)">
+              <input type="checkbox" id="inHasGreedy">
+              <span class="toggle-slider" aria-hidden="true"></span>
+              <span class="toggle-label">Greedy Machine</span>
+            </label>
+            <label class="toggle" title="Avatar TH discount gives 5% off upgrades and new-machine creation">
+              <input type="checkbox" id="inAvatarDisc">
+              <span class="toggle-slider" aria-hidden="true"></span>
+              <span class="toggle-label">Avatar discount</span>
+            </label>
+            <label class="toggle" title="Earn rewards from referred TH">
+              <input type="checkbox" id="inAmbassador">
+              <span class="toggle-slider" aria-hidden="true"></span>
+              <span class="toggle-label">Ambassador</span>
+            </label>
+          </div>
+          <div class="greedy-fields" id="greedyFields" style="display:none; margin-top:1rem;">
+            <p class="panel-hint" style="margin:0 0 0.75rem 0;">Initial marketplace TH is excluded from VIP tier progress; weekly growth compounds in projections.</p>
+            <div class="field-group">
+              <label class="field">
+                <span class="field-label">Initial marketplace TH</span>
+                <span class="field-wrap">
+                  <input type="number" id="inGreedyInitial" value="0" min="0" step="1" placeholder="0">
+                  <span class="field-unit">TH</span>
+                </span>
+              </label>
+              <label class="field">
+                <span class="field-label">Weekly growth</span>
+                <span class="field-wrap">
+                  <input type="number" id="inGreedyGrowth" value="0.3" min="0" step="0.01" placeholder="0">
+                  <span class="field-unit">%/wk</span>
+                </span>
+              </label>
+            </div>
+          </div>
+          <div class="field-group" id="ambassadorFields" style="display:none; margin-top:1rem;">
+            <label class="field">
+              <span class="field-label">Referred TH</span>
+              <span class="field-wrap">
+                <input type="number" id="inReferredTH" value="0" min="0" step="1" placeholder="0">
+                <span class="field-unit">TH</span>
+              </span>
+            </label>
+          </div>
+        </section>
+
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">Currency</span>
+            <span class="field-wrap">
+              <select id="inCurrency">
+                <option value="USD">USD ($)</option>
+                <option value="EUR">EUR (€)</option>
+                <option value="GBP">GBP (£)</option>
+              </select>
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">Discount override</span>
+            <span class="field-wrap">
+              <input type="number" id="inDiscOverride" min="0" max="30" step="0.1" placeholder="Auto">
+              <span class="field-unit">%</span>
+            </span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="calcBtn">Recalculate</button>
+        <button type="button" class="btn btn-secondary" id="shareSetup">🔗 Copy share link</button>
+
+        <div class="profile-bar">
+          <label class="field">
+            <span class="field-label">Profile</span>
+            <span class="field-wrap">
+              <select id="profileSelect"></select>
+            </span>
+          </label>
+          <div class="profile-actions">
+            <button type="button" class="btn btn-small" id="saveProfileBtn">Save</button>
+            <button type="button" class="btn btn-small" id="newProfileBtn">Save as new</button>
+            <button type="button" class="btn btn-small" id="deleteProfileBtn">Delete</button>
+          </div>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" id="planner">
+      <div class="panel-head">
+        <h2 class="panel-title">Capital Planner <span class="panel-badge">v1.1</span></h2>
+        <span class="panel-hint">Optimal allocation strategy</span>
+      </div>
+      <form class="form" id="plannerForm" novalidate>
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">USD Cash</span>
+            <span class="field-wrap">
+              <input type="number" id="plUsdCash" value="5000" min="0" step="10" placeholder="0">
+              <span class="field-unit">USD</span>
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">Existing GMT</span>
+            <span class="field-wrap">
+              <input type="number" id="plGmtBalance" value="0" min="0" step="10" placeholder="0">
+              <span class="field-unit">GMT</span>
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">Target Miner TH</span>
+            <span class="field-wrap">
+              <input type="number" id="plTargetMinerTH" value="100" min="0" step="1" placeholder="0">
+              <span class="field-unit">TH</span>
+            </span>
+          </label>
+        </div>
+        <button type="submit" class="btn btn-primary" id="plannerBtn">Find Optimal Split</button>
+      </form>
+      <p class="planner-note">Fiat capital is modeled net of a 2% entry fee. Existing GMT has no entry fee. Target Miner TH bounds how much hashrate can be efficiency-upgraded.</p>
+      <div class="planner-result empty" id="plResult">
+        <p class="planner-result-title" id="plResultTitle">Enter capital to see the optimal allocation step-by-step.</p>
+        <div class="planner-allocation">
+          <div class="allocation-labels">
+            <span>Lock GMT: <strong id="plPctLock">0%</strong></span>
+            <span>+15 W/TH: <strong id="plPctTH15">0%</strong></span>
+            <span>+12 W/TH: <strong id="plPctTH12">0%</strong></span>
+            <span>Eff Upgrade: <strong id="plPctEff">0%</strong></span>
+          </div>
+          <div class="allocation-bar" role="img" aria-label="Allocation split" id="plAllocationBar">
+            <span class="allocation-lock" id="plBarLock" style="width:0%" aria-label="Lock GMT allocation"></span>
+            <span class="allocation-th15" id="plBarTH15" style="width:0%" aria-label="15 W/TH allocation"></span>
+            <span class="allocation-th12" id="plBarTH12" style="width:0%" aria-label="12 W/TH allocation"></span>
+            <span class="allocation-eff" id="plBarEff" style="width:0%" aria-label="Efficiency upgrade allocation"></span>
+          </div>
+        </div>
+        <div class="planner-cards">
+          <div class="planner-card">
+            <span class="planner-card-label">Added Hashrate</span>
+            <span class="planner-card-value" id="plAddedTH">0 TH</span>
+            <span class="planner-card-sub" id="plFinalTH">Final: 0 TH</span>
+          </div>
+          <div class="planner-card">
+            <span class="planner-card-label">Locked GMT Add</span>
+            <span class="planner-card-value" id="plAddedGMT">0 GMT</span>
+            <span class="planner-card-sub" id="plFinalGMT">Final: 0 GMT</span>
+          </div>
+          <div class="planner-card">
+            <span class="planner-card-label">Efficiency Upgraded</span>
+            <span class="planner-card-value" id="plEffUp">0 TH</span>
+            <span class="planner-card-sub" id="plFinalWth">Final: 0 W/TH</span>
+          </div>
+          <div class="planner-card highlight">
+            <span class="planner-card-label">Projected Monthly</span>
+            <span class="planner-card-value" id="plMonthly">$0.00</span>
+            <span class="planner-card-sub" id="plUplift">+$0.00</span>
+          </div>
+          <div class="planner-card">
+            <span class="planner-card-label">New Tier / Disc</span>
+            <span class="planner-card-value" id="plNewTier">Bronze I</span>
+            <span class="planner-card-sub" id="plNewDiscount">0%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="projection">
+      <div class="panel-head">
+        <h2 class="panel-title">Growth Projection <span class="panel-badge">v1.2</span></h2>
+        <span class="panel-hint">Multi-year forecast</span>
+      </div>
+      <form class="form" id="projForm" novalidate>
+        <div class="field-group">
+          <label class="field">
+            <span class="field-label">Projection Years</span>
+            <span class="field-wrap">
+              <input type="number" id="pjYears" value="3" min="1" max="10" step="1">
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">BTC Annual Growth</span>
+            <span class="field-wrap">
+              <input type="number" id="pjBtcGrowth" value="0" step="1">
+              <span class="field-unit">%</span>
+            </span>
+          </label>
+        </div>
+        <div class="toggles">
+          <label class="toggle" title="Reinvest monthly income into more TH & GMT">
+            <input type="checkbox" id="pjReinvest">
+            <span class="toggle-slider" aria-hidden="true"></span>
+            <span class="toggle-label">Reinvest Income</span>
+          </label>
+          <label class="toggle" title="Apply baseline difficulty growth to per-TH rewards">
+            <input type="checkbox" id="pjDiffGrowth" checked>
+            <span class="toggle-slider" aria-hidden="true"></span>
+            <span class="toggle-label">Difficulty Growth</span>
+          </label>
+        </div>
+      </form>
+      <div class="proj-results">
+        <canvas id="projChart" height="200"></canvas>
+        <div class="proj-summary">
+          <div class="proj-summary-card">
+            <span class="proj-summary-label">Break-Even</span>
+            <span class="proj-summary-val" id="pjResultBE">-</span>
+          </div>
+          <div class="proj-summary-card">
+            <span class="proj-summary-label">Cum. Net Value</span>
+            <span class="proj-summary-val" id="pjResultCum">$0.00</span>
+          </div>
+          <div class="proj-summary-card">
+            <span class="proj-summary-label">Final Monthly</span>
+            <span class="proj-summary-val" id="pjResultFinalInc">$0.00</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="liveCharts">
+      <div class="panel-head">
+        <h2 class="panel-title">Market History</h2>
+        <div class="chart-controls" id="chartTimeframes">
+          <button type="button" class="btn btn-small active" data-days="7">7d</button>
+          <button type="button" class="btn btn-small" data-days="30">30d</button>
+          <button type="button" class="btn btn-small" data-days="90">90d</button>
+        </div>
+      </div>
+      <div class="charts-grid">
+        <div class="chart-container">
+          <h3 class="chart-header">Bitcoin (BTC)</h3>
+          <div class="chart-wrapper">
+            <canvas id="btcChart"></canvas>
+            <div class="chart-error" id="btcChartError">Chart temporarily unavailable</div>
+          </div>
+        </div>
+        <div class="chart-container">
+          <h3 class="chart-header">GoMining Token (GMT)</h3>
+          <div class="chart-wrapper">
+            <canvas id="gmtChart"></canvas>
+            <div class="chart-error" id="gmtChartError">Chart temporarily unavailable</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="breakdown">
+      <div class="panel-head">
+        <h2 class="panel-title">Daily Breakdown</h2>
+        <span class="panel-hint">Where every satoshi goes</span>
+      </div>
+      <div class="breakdown" id="breakdownList">
+        <div class="breakdown-row">
+          <span class="breakdown-label">Gross Revenue</span>
+          <span class="breakdown-bar"><span style="width:100%"></span></span>
+          <span class="breakdown-value" id="rowGross">$0.00</span>
+        </div>
+        <div class="breakdown-row fee">
+          <span class="breakdown-label">Electricity Fee</span>
+          <span class="breakdown-bar"><span style="width:0%"></span></span>
+          <span class="breakdown-value" id="rowElec">-$0.00</span>
+        </div>
+        <div class="breakdown-row fee">
+          <span class="breakdown-label">Service Fee</span>
+          <span class="breakdown-bar"><span style="width:0%"></span></span>
+          <span class="breakdown-value" id="rowSvc">-$0.00</span>
+        </div>
+        <div class="breakdown-row fee">
+          <span class="breakdown-label">Conversion Fee</span>
+          <span class="breakdown-bar"><span style="width:0%"></span></span>
+          <span class="breakdown-value" id="rowConv">-$0.00</span>
+        </div>
+        <div class="breakdown-row staking">
+          <span class="breakdown-label">GMT Staking</span>
+          <span class="breakdown-bar"><span style="width:0%"></span></span>
+          <span class="breakdown-value" id="rowStaking">+$0.00</span>
+        </div>
+        <div class="breakdown-row total">
+          <span class="breakdown-label">Total Net</span>
+          <span class="breakdown-bar"><span style="width:0%"></span></span>
+          <span class="breakdown-value" id="rowTotal">$0.00</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="vipStack">
+      <div class="panel-head">
+        <h2 class="panel-title">VIP &amp; Discount Stack</h2>
+        <span class="panel-hint" id="outDiscOverrideStatus">Automatico</span>
+      </div>
+      <div class="vip-stack">
+        <div class="vip-stack-row">
+          <span class="vip-stack-label">Current VIP</span>
+          <span class="vip-stack-value tier" id="outVipTier">Bronze I</span>
+        </div>
+        <div class="vip-stack-row">
+          <span class="vip-stack-label">Next tier</span>
+          <span class="vip-stack-value" id="outNextTier">—</span>
+        </div>
+        <div class="vip-progress">
+          <span class="vip-progress-label">TH progress</span>
+          <div class="vip-progress-bar" id="nextTierThProg"><span></span></div>
+        </div>
+        <div class="vip-progress">
+          <span class="vip-progress-label">GMT progress</span>
+          <div class="vip-progress-bar" id="nextTierGmtProg"><span></span></div>
+        </div>
+        <div class="vip-stack-grid">
+          <div class="vip-stack-card">
+            <span class="vip-stack-card-label">VIP Discount</span>
+            <span class="vip-stack-card-value" id="outVipDisc">0.0%</span>
+          </div>
+          <div class="vip-stack-card">
+            <span class="vip-stack-card-label">Token Discount</span>
+            <span class="vip-stack-card-value" id="outTokenDisc">0.0%</span>
+          </div>
+          <div class="vip-stack-card">
+            <span class="vip-stack-card-label">Total Discount</span>
+            <span class="vip-stack-card-value" id="outTotalDisc">0.0%</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="reinvestSignal">
+      <div class="panel-head">
+        <h2 class="panel-title">Reinvestment Signal</h2>
+        <span class="panel-hint">Where the next $1,000 works harder</span>
+      </div>
+      <div class="signal">
+        <div class="signal-main">
+          <span class="signal-label">Signal</span>
+          <span class="signal-value" id="outReinvestSignal">Hold / Balanced</span>
+        </div>
+        <div class="signal-grid">
+          <div class="signal-card">
+            <span class="signal-card-label">Buy TH</span>
+            <span class="signal-card-value" id="outReinvestThGain">$0.00 / mo</span>
+            <span class="signal-card-sub">extra monthly income</span>
+          </div>
+          <div class="signal-card">
+            <span class="signal-card-label">Lock GMT</span>
+            <span class="signal-card-value" id="outReinvestGmtGain">$0.00 / mo</span>
+            <span class="signal-card-sub">extra monthly income</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel" id="referral">
+      <div class="panel-head">
+        <h2 class="panel-title">Referral</h2>
+      </div>
+      <div class="referral">
+        <p class="referral-lead">New to GoMining?</p>
+        <p class="referral-code" id="refCode">ZG54KF1</p>
+        <p class="referral-sub">Use code <strong>ZG54KF1</strong> and get +5% bonus TH on your first miner.</p>
+        <div class="referral-actions">
+          <button class="btn btn-secondary" id="copyRef" type="button">📋 Copy code</button>
+          <a class="btn btn-primary" href="https://gomining.com/?ref=ZG54KF1" target="_blank" rel="noopener">🚀 Sign Up →</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel reveal" id="donate">
+      <div class="panel-head">
+        <h2 class="panel-title">Support MiningFlow</h2>
+      </div>
+      <div class="donate">
+        <p class="donate-story">If MiningFlow helped you earn more, a tip funds the features you request next: live data, sharper forecasts, and new tools. No ads, no paywalls.</p>
+        <div class="donate-grid">
+          <div class="donate-card">
+            <span class="donate-coin">Bitcoin (BTC)</span>
+            <code class="donate-address">bc1qcqycagy7p0tf4vc682ygdq522jee0cterllcv6</code>
+            <button class="copy-btn" type="button" data-copy="bc1qcqycagy7p0tf4vc682ygdq522jee0cterllcv6">Copy address</button>
+          </div>
+          <div class="donate-card">
+            <span class="donate-coin">Ethereum / GMT</span>
+            <code class="donate-address">0x0a6415FcBf54A46C4b21851493a0B387e8c23c94</code>
+            <button class="copy-btn" type="button" data-copy="0x0a6415FcBf54A46C4b21851493a0B387e8c23c94">Copy address</button>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>© 2026 MiningFlow · MIT License · Not financial advice.</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <div class="wizard-overlay" id="wizardOverlay" role="dialog" aria-modal="true" aria-labelledby="wizardTitle" hidden>
+    <div class="wizard-modal">
+      <div class="wizard-head">
+        <h2 class="wizard-title" id="wizardTitle">Welcome</h2>
+        <button type="button" class="wizard-close" id="wizardClose" aria-label="Close tour">×</button>
+      </div>
+      <div class="wizard-body">
+        <p class="wizard-text" id="wizardText" aria-live="polite">Loading tour…</p>
+      </div>
+      <div class="wizard-foot">
+        <div class="wizard-dots" id="wizardDots" aria-hidden="true"></div>
+        <div class="wizard-actions">
+          <button type="button" class="btn btn-secondary" id="wizardPrev">Back</button>
+          <button type="button" class="btn btn-primary" id="wizardNext">Next</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
