@@ -346,6 +346,10 @@
       </form>
       <div class="proj-results">
         <canvas id="projChart" height="200"></canvas>
+        <div class="chart-actions">
+          <button type="button" class="btn btn-small chart-shot" data-canvas="projChart" data-filename="miningflow-projection.png" data-title="Growth Projection on MiningFlow">📷 Screenshot</button>
+          <button type="button" class="btn btn-small chart-share" data-canvas="projChart" data-filename="miningflow-projection.png" data-title="Growth Projection on MiningFlow">↗ Share</button>
+        </div>
         <div class="proj-summary">
           <div class="proj-summary-card">
             <span class="proj-summary-label">Break-Even</span>
@@ -379,6 +383,10 @@
             <canvas id="btcChart"></canvas>
             <div class="chart-error" id="btcChartError">Chart temporarily unavailable</div>
           </div>
+          <div class="chart-actions">
+            <button type="button" class="btn btn-small chart-shot" data-canvas="btcChart" data-filename="miningflow-btc-chart.png" data-title="Bitcoin (BTC) market history on MiningFlow">📷 Screenshot</button>
+            <button type="button" class="btn btn-small chart-share" data-canvas="btcChart" data-filename="miningflow-btc-chart.png" data-title="Bitcoin (BTC) market history on MiningFlow">↗ Share</button>
+          </div>
         </div>
         <div class="chart-container">
           <h3 class="chart-header">GoMining Token (GMT)</h3>
@@ -386,7 +394,11 @@
             <canvas id="gmtChart"></canvas>
             <div class="chart-error" id="gmtChartError">Chart temporarily unavailable</div>
           </div>
-        </div>
+          <div class="chart-actions">
+            <button type="button" class="btn btn-small chart-shot" data-canvas="gmtChart" data-filename="miningflow-gmt-chart.png" data-title="GoMining Token (GMT) market history on MiningFlow">📷 Screenshot</button>
+            <button type="button" class="btn btn-small chart-share" data-canvas="gmtChart" data-filename="miningflow-gmt-chart.png" data-title="GoMining Token (GMT) market history on MiningFlow">↗ Share</button>
+          </div>
+        </div>“
       </div>
     </section>
 
@@ -394,12 +406,15 @@
       <div class="panel-head">
         <h2 class="panel-title">Bitcoin Rainbow Chart</h2>
         <span class="panel-hint">Power-Law valuation bands</span>
-      </div>
-      <div class="rainbow-wrap" id="btcRainbowWrap">
+      </div>        <div class="rainbow-wrap" id="btcRainbowWrap">
         <div class="btc-rainbow-legend" id="btcRainbowLegend" aria-label="Rainbow bands"></div>
         <div class="chart-wrapper rainbow-chart-wrapper">
           <canvas id="btcRainbowCanvas" role="img" aria-label="Bitcoin Rainbow Chart showing power-law valuation bands"></canvas>
           <div class="btc-rainbow-msg" id="btcRainbowMsg" aria-live="polite">Loading price history…</div>
+        </div>
+        <div class="chart-actions">
+          <button type="button" class="btn btn-small chart-shot" data-canvas="btcRainbowCanvas" data-filename="miningflow-rainbow-chart.png" data-title="Bitcoin Rainbow Chart on MiningFlow">📷 Screenshot</button>
+          <button type="button" class="btn btn-small chart-share" data-canvas="btcRainbowCanvas" data-filename="miningflow-rainbow-chart.png" data-title="Bitcoin Rainbow Chart on MiningFlow">↗ Share</button>
         </div>
         <div class="btc-rainbow-tip" id="btcRainbowTip"></div>
         <div class="btc-rainbow-foot" id="btcRainbowFoot">Scroll to zoom, drag to pan, double-click to reset.</div>

@@ -548,6 +548,19 @@ body {
   border-color: rgba(255, 255, 255, 0.16);
 }
 
+/* Chart screenshot/share actions */
+.chart-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.chart-actions .btn-small {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+}
+
 /* Breakdown */
 .breakdown {
   padding: 1.1rem 1.5rem 1.5rem;

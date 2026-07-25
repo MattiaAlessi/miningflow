@@ -2082,6 +2082,72 @@
   }
 
   // ---- Init ----
+  // ---- Screenshot & native share for charts/projection ----
+  function getCanvasDataURL(canvasId) {
+    const canvas = $(canvasId);
+    if (!canvas) throw new Error('Canvas not found');
+    return canvas.toDataURL('image/png');
+  }
+
+  function downloadDataURL(dataURL, filename) {
+    const a = document.createElement('a');
+    a.href = dataURL;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  async function shareCanvas(canvasId, filename, title) {
+    try {
+      const dataURL = getCanvasDataURL(canvasId);
+      if (navigator.share) {
+        const res = await fetch(dataURL);
+        const blob = await res.blob();
+        const file = new File([blob], filename, { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ title, files: [file] });
+          showToast('Image shared');
+          return;
+        }
+      }
+      downloadDataURL(dataURL, filename);
+      showToast('Screenshot downloaded');
+    } catch (err) {
+      if (err && err.name === 'AbortError') {
+        showToast('Share cancelled');
+        return;
+      }
+      showToast('Could not share image');
+    }
+  }
+
+  async function screenshotCanvas(canvasId, filename) {
+    try {
+      const dataURL = getCanvasDataURL(canvasId);
+      downloadDataURL(dataURL, filename);
+      showToast('Screenshot downloaded');
+    } catch (err) {
+      showToast('Could not capture screenshot');
+    }
+  }
+
+  document.addEventListener('click', (e) => {
+    const shareBtn = e.target.closest('.chart-share');
+    const shotBtn = e.target.closest('.chart-shot');
+    if (shareBtn) {
+      const canvasId = shareBtn.dataset.canvas;
+      const filename = shareBtn.dataset.filename || 'miningflow-chart.png';
+      const title = shareBtn.dataset.title || 'MiningFlow chart';
+      shareCanvas(canvasId, filename, title);
+    }
+    if (shotBtn) {
+      const canvasId = shotBtn.dataset.canvas;
+      const filename = shotBtn.dataset.filename || 'miningflow-chart.png';
+      screenshotCanvas(canvasId, filename);
+    }
+  });
+
   async function init() {
     await fetchExchangeRates();
     updateTicker();
