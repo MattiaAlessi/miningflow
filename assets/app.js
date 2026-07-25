@@ -116,6 +116,11 @@
 
   function animateValue(el, endValue, formatter, duration = 800) {
     if (!el) return;
+    // Cancel any running animation on this element to avoid stale values
+    if (el._miningflowRaf) {
+      cancelAnimationFrame(el._miningflowRaf);
+      el._miningflowRaf = null;
+    }
     const startValue = parseNumberFromText(el.textContent);
     if (startValue === endValue && el.textContent === formatter(endValue)) return;
     const startTime = performance.now();
@@ -128,10 +133,12 @@
       const current = startValue + (endValue - startValue) * eased;
       el.textContent = formatter(current);
       if (progress < 1) {
-        requestAnimationFrame(step);
+        el._miningflowRaf = requestAnimationFrame(step);
+      } else {
+        el._miningflowRaf = null;
       }
     }
-    requestAnimationFrame(step);
+    el._miningflowRaf = requestAnimationFrame(step);
   }
 
   function initReveal() {
@@ -516,19 +523,27 @@
     const max = Math.max(r.dailyRevUSD, 1);
     const pct = (v) => Math.min(100, (Math.abs(v) / max) * 100);
 
+    // Discount/rebate is the difference between gross and discounted fees.
+    // It is shown as a positive credit so the rows sum to totalDailyUSD.
+    const discountRebate = r.grossFeeUSD - r.discountedFees;
+
     setText('rowGross', fmtUSD(r.dailyRevUSD));
     setText('rowElec', '-' + fmtUSD(r.electricityFee));
     setText('rowSvc', '-' + fmtUSD(r.serviceFee));
+    setText('rowDiscount', '+' + fmtUSD(discountRebate));
     setText('rowConv', '-' + fmtUSD(r.conversionFee));
     setText('rowStaking', '+' + fmtUSD(r.stakingDailyUSD));
+    setText('rowAmbassador', '+' + fmtUSD(r.ambassadorDailyUSD));
     setText('rowTotal', fmtUSD(r.totalDailyUSD));
 
     const bars = [
       ['rowGross', 100],
       ['rowElec', pct(r.electricityFee)],
       ['rowSvc', pct(r.serviceFee)],
+      ['rowDiscount', pct(discountRebate)],
       ['rowConv', pct(r.conversionFee)],
       ['rowStaking', pct(r.stakingDailyUSD)],
+      ['rowAmbassador', pct(r.ambassadorDailyUSD)],
       ['rowTotal', pct(r.totalDailyUSD)]
     ];
 
