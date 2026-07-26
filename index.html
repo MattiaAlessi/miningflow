@@ -234,103 +234,126 @@
 
     <section class="panel" id="planner">
       <div class="panel-head">
-        <h2 class="panel-title">Capital Planner <span class="panel-badge">v1.1</span></h2>
-        <span class="panel-hint">Where your next deposit works hardest</span>
+        <h2 class="panel-title">Capital Planner <span class="panel-badge">v1.2</span></h2>
+        <span class="panel-hint">Make your next deposit work harder</span>
       </div>
-      <form class="form" id="plannerForm" novalidate>
-        <div class="field-group">
-          <label class="field">
-            <span class="field-label">Cash to Invest</span>
-            <span class="field-wrap">
-              <input type="number" id="plUsdCash" value="5000" min="0" step="10" placeholder="0" title="How much fiat you want to deploy. A 2% entry fee is deducted.">
-              <span class="field-unit">USD</span>
-            </span>
-          </label>
-          <label class="field">
-            <span class="field-label">GMT You Hold</span>
-            <span class="field-wrap">
-              <input type="number" id="plGmtBalance" value="0" min="0" step="10" placeholder="0" title="GMT you already own and can lock. No entry fee.">
-              <span class="field-unit">GMT</span>
-            </span>
-          </label>
-          <label class="field">
-            <span class="field-label">Efficiency Cap <span class="field-hint">(optional)</span></span>
-            <span class="field-wrap">
-              <input type="number" id="plTargetMinerTH" value="100" min="0" step="1" placeholder="0" title="How much of your existing miner can be upgraded to 12 W/TH. Higher = more efficiency potential.">
-              <span class="field-unit">TH</span>
-            </span>
-          </label>
-        </div>
-        <button type="submit" class="btn btn-primary" id="plannerBtn">Find Optimal Split</button>
-      </form>
-      <p class="planner-note">💡 Cash pays a 2% entry fee on GMT/TH purchases. GMT you hold has no fee. The Efficiency Cap limits how much of your miner can be upgraded.</p>
-      <div class="planner-result empty" id="plResult">
-        <p class="planner-result-title" id="plResultTitle">Enter capital to see the optimal allocation.</p>
 
-        <!-- Plain-English summary -->
+      <!-- Mode tabs -->
+      <div class="planner-modes">
+        <button type="button" class="planner-mode-btn active" id="plModeAmount" data-mode="amount">💰 How to invest $X</button>
+        <button type="button" class="planner-mode-btn" id="plModeGoal" data-mode="goal">🎯 How much to earn $X/mo</button>
+      </div>
+
+      <form class="form" id="plannerForm" novalidate>
+        <!-- Amount mode inputs -->
+        <div id="plAmountBlock">
+          <div class="field-group">
+            <label class="field">
+              <span class="field-label">Cash to Invest</span>
+              <span class="field-wrap">
+                <input type="number" id="plUsdCash" value="5000" min="0" step="10" placeholder="0" title="Fiat to deploy. A 2% entry fee is deducted.">
+                <span class="field-unit">USD</span>
+              </span>
+            </label>
+            <label class="field">
+              <span class="field-label">GMT You Hold</span>
+              <span class="field-wrap">
+                <input type="number" id="plGmtBalance" value="0" min="0" step="10" placeholder="0" title="GMT you already own. No entry fee.">
+                <span class="field-unit">GMT</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Goal mode inputs -->
+        <div id="plGoalBlock" style="display:none">
+          <div class="field-group">
+            <label class="field">
+              <span class="field-label">Target Monthly Income</span>
+              <span class="field-wrap">
+                <input type="number" id="plTargetIncome" value="500" min="1" step="10" placeholder="0" title="How much extra monthly income you want.">
+                <span class="field-unit" id="plTargetUnit">USD/mo</span>
+              </span>
+            </label>
+            <label class="field">
+              <span class="field-label">GMT You Hold</span>
+              <span class="field-wrap">
+                <input type="number" id="plGmtBalanceGoal" value="0" min="0" step="10" placeholder="0" title="GMT you already own.">
+                <span class="field-unit">GMT</span>
+              </span>
+            </label>
+          </div>
+          <p class="planner-note">Finds the minimum capital you need to deposit to reach your target monthly income.</p>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="plannerBtn">Calculate Optimal Split</button>
+      </form>
+
+      <div class="planner-result empty" id="plResult">
+        <p class="planner-result-title" id="plResultTitle">Enter your numbers and click Calculate.</p>
+
+        <!-- Summary -->
         <div class="planner-summary" id="plSummary" style="display:none">
           <p class="planner-summary-text" id="plSummaryText"></p>
         </div>
 
-        <div class="planner-allocation">
-          <div class="allocation-labels">
-            <span class="alloc-label"><span class="alloc-dot" style="background:linear-gradient(90deg,#525252,#737373)"></span> Lock GMT: <strong id="plPctLock">0%</strong></span>
-            <span class="alloc-label"><span class="alloc-dot" style="background:linear-gradient(90deg,#d4af37,#e5c76b)"></span> Standard TH: <strong id="plPctTH15">0%</strong></span>
-            <span class="alloc-label"><span class="alloc-dot" style="background:linear-gradient(90deg,#a1a1a1,#d1d1d1)"></span> Premium TH: <strong id="plPctTH12">0%</strong></span>
-            <span class="alloc-label"><span class="alloc-dot" style="background:linear-gradient(90deg,#22c55e,#4ade80)"></span> Upgrade Eff: <strong id="plPctEff">0%</strong></span>
+        <!-- Income comparison -->
+        <div class="planner-comparison" id="plComparison" style="display:none">
+          <div class="comparison-card current">
+            <span class="comparison-label">Current</span>
+            <span class="comparison-value" id="plCurrentMonthly">$0</span>
+            <span class="comparison-sub">/mo</span>
           </div>
+          <div class="comparison-arrow">→</div>
+          <div class="comparison-card projected">
+            <span class="comparison-label">Projected</span>
+            <span class="comparison-value" id="plProjectedMonthly">$0</span>
+            <span class="comparison-sub" id="plUplift">+$0 /mo uplift</span>
+          </div>
+        </div>
+
+        <!-- Allocation bar -->
+        <div class="planner-allocation" style="display:none">
           <div class="allocation-bar" role="img" aria-label="Allocation split" id="plAllocationBar">
-            <span class="allocation-lock" id="plBarLock" style="width:0%" aria-label="Lock GMT allocation"></span>
-            <span class="allocation-th15" id="plBarTH15" style="width:0%" aria-label="15 W/TH allocation"></span>
-            <span class="allocation-th12" id="plBarTH12" style="width:0%" aria-label="12 W/TH allocation"></span>
-            <span class="allocation-eff" id="plBarEff" style="width:0%" aria-label="Efficiency upgrade allocation"></span>
+            <span class="allocation-lock" id="plBarLock" style="width:0%" title="Lock GMT"></span>
+            <span class="allocation-th15" id="plBarTH15" style="width:0%" title="Standard TH (15 W/TH)"></span>
+            <span class="allocation-th12" id="plBarTH12" style="width:0%" title="Premium TH (12 W/TH)"></span>
+            <span class="allocation-eff" id="plBarEff" style="width:0%" title="Upgrade Efficiency"></span>
           </div>
-          <div class="planner-legend">
-            <span class="planner-legend-item"><span class="legend-swatch swatch-lock"></span>Lock GMT — fee discount + staking rewards</span>
-            <span class="planner-legend-item"><span class="legend-swatch swatch-th15"></span>Standard TH (15 W/TH) — best-value hashrate</span>
-            <span class="planner-legend-item"><span class="legend-swatch swatch-th12"></span>Premium TH (12 W/TH) — highest efficiency</span>
-            <span class="planner-legend-item"><span class="legend-swatch swatch-eff"></span>Upgrade efficiency — lower power costs</span>
-          </div>
-        </div>
-
-        <div class="planner-comparison" id="plComparison">
-          <div class="planner-card current">
-            <span class="planner-card-label">Current Monthly</span>
-            <span class="planner-card-value" id="plCurrentMonthly">$0.00</span>
-            <span class="planner-card-sub">from your setup</span>
-          </div>
-          <div class="planner-card projected">
-            <span class="planner-card-label">Projected Monthly</span>
-            <span class="planner-card-value" id="plProjectedMonthly">$0.00</span>
-            <span class="planner-card-sub" id="plUplift">+$0.00 uplift</span>
+          <div class="allocation-labels">
+            <span class="alloc-label"><span class="alloc-dot" style="background:#737373"></span> Lock GMT: <strong id="plPctLock">0%</strong></span>
+            <span class="alloc-label"><span class="alloc-dot" style="background:var(--gold)"></span> Standard TH: <strong id="plPctTH15">0%</strong></span>
+            <span class="alloc-label"><span class="alloc-dot" style="background:#a1a1a1"></span> Premium TH: <strong id="plPctTH12">0%</strong></span>
+            <span class="alloc-label"><span class="alloc-dot" style="background:var(--green)"></span> Upgrade Eff: <strong id="plPctEff">0%</strong></span>
           </div>
         </div>
 
-        <div class="planner-cards">
-          <div class="planner-card">
-            <span class="planner-card-label">Added Hashrate</span>
-            <span class="planner-card-value" id="plAddedTH">0 TH</span>
-            <span class="planner-card-sub" id="plFinalTH">Final: 0 TH</span>
+        <!-- Detail cards -->
+        <div class="planner-details" style="display:none">
+          <div class="planner-detail-card">
+            <span class="detail-label">Adds Hashrate</span>
+            <span class="detail-value" id="plAddedTH">0 TH</span>
+            <span class="detail-sub" id="plFinalTH">Final: 0 TH</span>
           </div>
-          <div class="planner-card">
-            <span class="planner-card-label">Locked GMT Added</span>
-            <span class="planner-card-value" id="plAddedGMT">0 GMT</span>
-            <span class="planner-card-sub" id="plFinalGMT">Final: 0 GMT</span>
+          <div class="planner-detail-card">
+            <span class="detail-label">Locks GMT</span>
+            <span class="detail-value" id="plAddedGMT">0 GMT</span>
+            <span class="detail-sub" id="plFinalGMT">Final: 0 GMT</span>
           </div>
-          <div class="planner-card">
-            <span class="planner-card-label">Efficiency Upgraded</span>
-            <span class="planner-card-value" id="plEffUp">0 TH</span>
-            <span class="planner-card-sub" id="plFinalWth">Final: 0 W/TH</span>
+          <div class="planner-detail-card">
+            <span class="detail-label">Upgrades Eff</span>
+            <span class="detail-value" id="plEffUp">0 TH</span>
+            <span class="detail-sub" id="plFinalWth">Final: 0 W/TH</span>
           </div>
-          <div class="planner-card">
-            <span class="planner-card-label">New VIP Tier</span>
-            <span class="planner-card-value tier" id="plNewTier">Bronze I</span>
-            <span class="planner-card-sub" id="plNewDiscount">0% discount</span>
+          <div class="planner-detail-card">
+            <span class="detail-label">VIP Tier</span>
+            <span class="detail-value tier" id="plNewTier">Bronze I</span>
+            <span class="detail-sub" id="plNewDiscount">0% disc</span>
           </div>
-          <div class="planner-card">
-            <span class="planner-card-label">Total Spent</span>
-            <span class="planner-card-value" id="plTotalSpent">$0</span>
-            <span class="planner-card-sub">of your budget</span>
+          <div class="planner-detail-card">
+            <span class="detail-label">Capital Used</span>
+            <span class="detail-value" id="plTotalSpent">$0</span>
+            <span class="detail-sub">of budget</span>
           </div>
         </div>
       </div>

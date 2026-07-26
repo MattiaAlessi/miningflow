@@ -894,7 +894,47 @@ body {
   opacity: 1;
 }
 
-/* Planner v1.1 */
+/* Planner v1.2 */
+.planner-modes {
+  display: flex;
+  gap: 0;
+  margin: 0 1.4rem;
+  padding-top: 1.2rem;
+}
+
+.planner-mode-btn {
+  flex: 1;
+  padding: 0.6rem 1rem;
+  border: 1px solid var(--card-border);
+  background: rgba(255, 255, 255, 0.02);
+  color: var(--text2);
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.planner-mode-btn:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.planner-mode-btn:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+.planner-mode-btn.active {
+  background: rgba(212, 175, 55, 0.1);
+  border-color: var(--gold);
+  color: var(--gold);
+  z-index: 1;
+}
+
+.planner-mode-btn:not(.active):hover {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text1);
+}
+
 .planner-note {
   padding: 0 1.4rem 1rem;
   margin: 0;
@@ -904,7 +944,7 @@ body {
 }
 
 .planner-summary {
-  margin: 0 1.4rem 1.2rem;
+  margin: 1rem 1.4rem;
   padding: 1rem 1.2rem;
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, rgba(212, 175, 55, 0.06), rgba(212, 175, 55, 0.02));
@@ -918,37 +958,6 @@ body {
   font-size: 0.85rem;
   line-height: 1.65;
 }
-
-.planner-legend {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem 1rem;
-  margin-top: 0.65rem;
-  padding: 0.65rem 0.75rem;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.planner-legend-item {
-  font-size: 0.75rem;
-  color: var(--text3);
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.legend-swatch {
-  display: inline-block;
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.swatch-lock { background: linear-gradient(135deg, #525252, #737373); }
-.swatch-th15 { background: linear-gradient(135deg, var(--gold), var(--gold-light)); }
-.swatch-th12 { background: linear-gradient(135deg, #a1a1a1, #d1d1d1); }
-.swatch-eff  { background: linear-gradient(135deg, var(--green), #4ade80); }
 
 .alloc-label {
   display: inline-flex;
@@ -966,21 +975,6 @@ body {
   flex-shrink: 0;
 }
 
-.planner-allocation .allocation-labels {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
-  font-size: 0.82rem;
-  color: var(--text2);
-}
-
-.planner-allocation .allocation-labels strong {
-  color: var(--text1);
-  font-family: var(--mono);
-}
-
 .allocation-lock,
 .allocation-th15,
 .allocation-th12,
@@ -990,13 +984,13 @@ body {
   transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.allocation-lock { background: linear-gradient(90deg, #525252, #737373); }
-.allocation-th15 { background: linear-gradient(90deg, var(--gold), var(--gold-light)); }
-.allocation-th12 { background: linear-gradient(90deg, #a1a1a1, #d1d1d1); }
-.allocation-eff  { background: linear-gradient(90deg, var(--green), #4ade80); }
+.allocation-lock { background: #737373; }
+.allocation-th15 { background: var(--gold); }
+.allocation-th12 { background: #a1a1a1; }
+.allocation-eff  { background: var(--green); }
 
 .planner-result {
-  padding: 1.4rem;
+  padding: 0 1.4rem 1.4rem;
   border-top: 1px solid var(--card-border);
   background: rgba(255, 255, 255, 0.01);
 }
@@ -1006,7 +1000,7 @@ body {
 }
 
 .planner-result.empty .planner-allocation,
-.planner-result.empty .planner-cards,
+.planner-result.empty .planner-details,
 .planner-result.empty .planner-comparison,
 .planner-result.empty .planner-summary {
   filter: grayscale(0.8);
@@ -1014,116 +1008,152 @@ body {
 }
 
 .planner-result-title {
-  margin: 0 0 1.2rem;
+  margin: 0 0 0.8rem;
+  padding-top: 1rem;
   color: var(--text2);
   font-size: 0.95rem;
+  font-weight: 500;
 }
 
 .planner-allocation {
-  margin-bottom: 1rem;
+  margin: 1rem 0;
 }
 
 .allocation-labels {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
   color: var(--text2);
   font-size: 0.82rem;
-  margin-bottom: 0.5rem;
+  margin-top: 0.5rem;
 }
 
 .allocation-labels strong {
   color: var(--text1);
   font-family: var(--mono);
-  margin-left: 0.15rem;
 }
 
 .allocation-bar {
   display: flex;
-  height: 12px;
+  height: 14px;
   border-radius: 50px;
   overflow: hidden;
   background: rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Planner comparison — before vs after */
+/* Planner comparison — Current vs Projected */
 .planner-comparison {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin: 1rem 0;
 }
 
-.planner-card.current {
+.comparison-card {
+  flex: 1;
+  padding: 1rem;
+  border-radius: var(--radius-sm);
+  text-align: center;
+}
+
+.comparison-card.current {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.planner-card.current .planner-card-value {
+.comparison-card.projected {
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.08), rgba(212, 175, 55, 0.02));
+  border: 1px solid rgba(212, 175, 55, 0.2);
+}
+
+.comparison-arrow {
+  color: var(--text3);
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.comparison-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 0.3rem;
+}
+
+.comparison-value {
+  display: block;
+  font-family: var(--mono);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--text1);
+  line-height: 1.2;
+  margin-bottom: 0.2rem;
+}
+
+.comparison-card.projected .comparison-value {
+  color: var(--gold);
+}
+
+.comparison-card.current .comparison-value {
   color: var(--text2);
 }
 
-.planner-card.projected {
-  background: linear-gradient(135deg, rgba(245, 166, 35, 0.1), rgba(245, 166, 35, 0.02));
-  border-color: rgba(245, 166, 35, 0.2);
-}
-
-.planner-card.projected .planner-card-value {
-  color: var(--gold);
-  font-size: 1.35rem;
-}
-
-.planner-card.projected .planner-card-sub {
+.comparison-sub {
+  display: block;
   color: var(--green);
+  font-size: 0.82rem;
   font-weight: 600;
 }
 
-.planner-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-  gap: 0.75rem;
+.comparison-card.current .comparison-sub {
+  color: var(--text3);
 }
 
-.planner-card {
-  padding: 0.9rem 0.8rem;
+/* Planner detail cards */
+.planner-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.65rem;
+  margin-top: 1rem;
+}
+
+.planner-detail-card {
+  padding: 0.8rem 0.6rem;
   border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
   text-align: center;
-  transition: transform 0.2s, border-color 0.2s;
 }
 
-.planner-card:hover {
-  transform: translateY(-2px);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.planner-card.highlight {
-  background: linear-gradient(135deg, rgba(245, 166, 35, 0.1), rgba(245, 166, 35, 0.02));
-  border-color: rgba(245, 166, 35, 0.2);
-}
-
-.planner-card-label {
+.detail-label {
   display: block;
-  color: var(--text2);
-  font-size: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--text3);
   text-transform: uppercase;
   letter-spacing: 0.05em;
   margin-bottom: 0.3rem;
 }
 
-.planner-card-value {
+.detail-value {
   display: block;
   font-family: var(--mono);
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--text1);
-  margin-bottom: 0.2rem;
+  margin-bottom: 0.15rem;
 }
 
-.planner-card-sub {
+.detail-value.tier {
+  color: var(--gold);
+}
+
+.detail-sub {
   display: block;
   color: var(--text3);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
 }
 
 .panel-badge {
@@ -1150,10 +1180,26 @@ body {
 
 @media (max-width: 640px) {
   .planner-comparison {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+    gap: 0.5rem;
   }
-  .planner-cards {
+  .comparison-arrow {
+    transform: rotate(90deg);
+  }
+  .comparison-value {
+    font-size: 1.3rem;
+  }
+  .planner-details {
     grid-template-columns: 1fr 1fr;
+  }
+  .planner-modes {
+    flex-direction: column;
+    gap: 0.25rem;
+    margin: 0 1rem;
+  }
+  .planner-mode-btn:first-child,
+  .planner-mode-btn:last-child {
+    border-radius: 10px;
   }
 }
 
