@@ -3,6 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    (function () {
+      document.documentElement.classList.add('js-animations');
+      var t = setTimeout(function () {
+        if (!window._miningflowAnimationsLoaded) {
+          document.documentElement.classList.remove('js-animations');
+        }
+      }, 5000);
+      window._miningflowCancelAnimFallback = function () { clearTimeout(t); };
+    })();
+  </script>
   <meta name="description" content="MiningFlow — Free GoMining profit calculator with live BTC & GMT data, VIP tiers, capital planner, growth projection, and daily breakdown.">
   <meta name="keywords" content="GoMining, Bitcoin mining, BTC, GMT, profit calculator, mining calculator, TH, W/TH, VIP tier, staking">
   <meta name="author" content="MiningFlow">
@@ -18,8 +29,11 @@
   <title>MiningFlow — GoMining Profit Calculator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js" defer></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js" defer></script>
+  <script src="assets/animations.js" defer></script>
   <noscript>
     <style>
       .reveal { opacity: 1 !important; transform: none !important; }
@@ -35,14 +49,53 @@
   <meta name="twitter:image:alt" content="MiningFlow — GoMining Profit Calculator">
   <meta name="twitter:card" content="summary_large_image"></head>
 <body>
-  <div class="bg-glow"></div>
+  <svg xmlns="http://www.w3.org/2000/svg" style="position:absolute;width:0;height:0;overflow:hidden" aria-hidden="true">
+    <symbol id="icon-setup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a7.9 7.9 0 0 0 0-6"/>
+      <path d="M4.6 15a7.9 7.9 0 0 1 0-6"/>
+      <path d="M17.3 20.7a7.9 7.9 0 0 1-10.6 0"/>
+      <path d="M17.3 3.3a7.9 7.9 0 0 0-10.6 0"/>
+    </symbol>
+    <symbol id="icon-planner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <circle cx="12" cy="12" r="5" stroke-dasharray="2 2"/>
+      <circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/>
+    </symbol>
+    <symbol id="icon-projection" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17l6-6 4 4 7-7"/>
+      <path d="M17 8h6v6"/>
+    </symbol>
+    <symbol id="icon-charts" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 17c3.6-3 6.4-6 10-6s5.4 4 10 4"/>
+      <path d="M3 11c3.6-3 6.4-5 10-5s5.4 4 10 4"/>
+    </symbol>
+    <symbol id="icon-breakdown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M8 6h13M8 12h13M8 18h13"/>
+      <circle cx="4" cy="6" r="1" fill="currentColor"/>
+      <circle cx="4" cy="12" r="1" fill="currentColor"/>
+      <circle cx="4" cy="18" r="1" fill="currentColor"/>
+    </symbol>
+    <symbol id="icon-vip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M2 8l2.5 11h14.9L22 8l-7 4-5-4-3 4-2-4z"/>
+    </symbol>
+    <symbol id="icon-referral" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M15 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
+      <path d="M5 18a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v1H5v-1z" fill="currentColor" fill-opacity=".15"/>
+      <path d="M15 13a4 4 0 0 1 4-4h.01"/>
+    </symbol>
+    <symbol id="icon-donate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M20.8 4.6a4.4 4.4 0 0 0-6.1 0L12 7.3 9.3 4.6a4.4 4.4 0 0 0-6.1 6.1l2.7 2.7L12 19.2l6.1-6.1 2.7-2.7a4.4 4.4 0 0 0 0-6.1z" fill="currentColor" fill-opacity=".12"/>
+    </symbol>
+  </svg>
+  <div class="noise-overlay"></div>
+  <div class="mesh-orb mesh-orb-1" aria-hidden="true"></div>
+  <div class="mesh-orb mesh-orb-2" aria-hidden="true"></div>
+  <div class="cursor-spotlight" aria-hidden="true"></div>
 
   <nav class="nav" aria-label="Main">
     <a class="brand" href="./" aria-label="MiningFlow home">
-      <svg class="brand-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M2 12c2.5-4 5.5-6 9-6s6.5 2 9 6c-2.5 4-5.5 6-9 6s-6.5-2-9-6z"/>
-        <path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/>
-      </svg>
+      <img class="brand-icon" src="assets/logo.svg" alt="" aria-hidden="true">
       <span class="brand-text">MiningFlow</span>
     </a>
     <div class="nav-links">
@@ -57,10 +110,11 @@
 
   <header class="hero">
     <div class="hero-copy">
-      <h1 class="hero-title">Maximize your <span>GoMining ROI.</span></h1>
+      <div class="hero-eyebrow">MiningFlow Calculator</div>
+      <h1 class="hero-title">Maximize your <em>GoMining</em> <span>ROI.</span></h1>
       <p class="hero-sub">A precise profit calculator for GoMining operators. Live BTC &amp; GMT data, automatic VIP tier detection, and capital allocation insight.</p>
       <div class="hero-cta">
-        <a href="#setup" class="btn btn-primary">Build your setup</a>
+        <span class="magnetic-wrap"><a href="#setup" class="btn btn-primary magnetic-btn">Build your setup</a></span>
         <span class="hero-cta-hint">Free. No account required.</span>
       </div>
     </div>
@@ -101,7 +155,7 @@
 
     <section class="panel" id="setup">
       <div class="panel-head">
-        <h2 class="panel-title">Your Setup</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-setup"></use></svg> Your Setup</h2>
         <span class="panel-hint">Edit your farm details</span>
       </div>
       <form class="form" id="setupForm" novalidate>
@@ -282,7 +336,7 @@
 
     <section class="panel" id="planner">
       <div class="panel-head">
-        <h2 class="panel-title">Capital Planner <span class="panel-badge">v1.2</span></h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-planner"></use></svg> Capital Planner <span class="panel-badge">v1.2</span></h2>
         <span class="panel-hint">Make your next deposit work harder</span>
       </div>
 
@@ -409,7 +463,7 @@
 
     <section class="panel" id="projection">
       <div class="panel-head">
-        <h2 class="panel-title">Growth Projection <span class="panel-badge">Enhanced</span></h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-projection"></use></svg> Growth Projection <span class="panel-badge">Enhanced</span></h2>
         <span class="panel-hint">Multi-year forecast with halving events</span>
       </div>
 
@@ -525,7 +579,7 @@
 
     <section class="panel" id="liveCharts">
       <div class="panel-head">
-        <h2 class="panel-title">Market History</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-charts"></use></svg> Market History</h2>
         <div class="chart-controls" id="chartTimeframes">
           <button type="button" class="btn btn-small active" data-days="7">7d</button>
           <button type="button" class="btn btn-small" data-days="30">30d</button>
@@ -558,7 +612,7 @@
       </div>
     </section>    <section class="panel reveal" id="advancedCharts">
       <div class="panel-head">
-        <h2 class="panel-title">Advanced Charts</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-charts"></use></svg> Advanced Charts</h2>
         <span class="panel-hint">1-hour candles with drawing tools by TradingView</span>
       </div>
       <div class="advanced-charts-grid">
@@ -579,7 +633,7 @@
 
     <section class="panel reveal" id="rainbowChart">
       <div class="panel-head">
-        <h2 class="panel-title">Bitcoin Rainbow Chart</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-charts"></use></svg> Bitcoin Rainbow Chart</h2>
         <span class="panel-hint">Power-Law valuation bands</span>
       </div>
       <div class="rainbow-wrap" id="btcRainbowWrap">
@@ -599,7 +653,7 @@
 
     <section class="panel" id="breakdown">
       <div class="panel-head">
-        <h2 class="panel-title">Daily Breakdown</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-breakdown"></use></svg> Daily Breakdown</h2>
         <span class="panel-hint">Where every satoshi goes</span>
       </div>
       <div class="breakdown" id="breakdownList">
@@ -648,7 +702,7 @@
 
     <section class="panel" id="vipStack">
       <div class="panel-head">
-        <h2 class="panel-title">VIP &amp; Discount Stack</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-vip"></use></svg> VIP &amp; Discount Stack</h2>
         <span class="panel-hint" id="outDiscOverrideStatus">Automatico</span>
       </div>
       <div class="vip-stack">
@@ -691,7 +745,7 @@
 
     <section class="panel" id="reinvestSignal">
       <div class="panel-head">
-        <h2 class="panel-title">Reinvestment Signal</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-projection"></use></svg> Reinvestment Signal</h2>
         <span class="panel-hint">Where the next $1,000 works harder</span>
       </div>
       <div class="signal">
@@ -716,7 +770,7 @@
 
     <section class="panel" id="referral">
       <div class="panel-head">
-        <h2 class="panel-title">Referral</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-referral"></use></svg> Referral</h2>
       </div>
       <div class="referral">
         <p class="referral-lead">New to GoMining?</p>
@@ -731,7 +785,7 @@
 
     <section class="panel reveal" id="donate">
       <div class="panel-head">
-        <h2 class="panel-title">Support MiningFlow</h2>
+        <h2 class="panel-title"><svg class="panel-icon" aria-hidden="true"><use href="assets/icons.svg#icon-donate"></use></svg> Support MiningFlow</h2>
       </div>
       <div class="donate">
         <p class="donate-story">If MiningFlow helped you earn more, a tip funds the features you request next: live data, sharper forecasts, and new tools. No ads, no paywalls.</p>

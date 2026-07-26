@@ -2828,11 +2828,62 @@
       });
   }
 
+  function initCursorSpotlight() {
+    const spotlight = document.querySelector('.cursor-spotlight');
+    if (!spotlight) return;
+    let raf = null;
+    let x = 0, y = 0;
+    function move() {
+      spotlight.style.transform = `translate(${x - 200}px, ${y - 200}px)`;
+      raf = null;
+    }
+    document.addEventListener('mousemove', (e) => {
+      x = e.clientX;
+      y = e.clientY;
+      if (!raf) raf = requestAnimationFrame(move);
+    }, { passive: true });
+  }
+
+  function initMagneticButtons() {
+    const isFine = window.matchMedia('(pointer: fine)').matches;
+    if (!isFine) return;
+    document.querySelectorAll('.magnetic-btn').forEach((btn) => {
+      const wrap = btn.closest('.magnetic-wrap');
+      if (!wrap) return;
+      wrap.addEventListener('mousemove', (e) => {
+        const rect = wrap.getBoundingClientRect();
+        const dx = e.clientX - rect.left - rect.width / 2;
+        const dy = e.clientY - rect.top - rect.height / 2;
+        wrap.style.transform = `translate(${dx * 0.18}px, ${dy * 0.18}px)`;
+      });
+      wrap.addEventListener('mouseleave', () => {
+        wrap.style.transform = '';
+      });
+    });
+  }
+
+  function initButtonShine() {
+    const isFine = window.matchMedia('(pointer: fine)').matches;
+    if (!isFine) return;
+    document.querySelectorAll('.btn-primary, .btn-secondary').forEach((btn) => {
+      btn.addEventListener('mousemove', (e) => {
+        const rect = btn.getBoundingClientRect();
+        const x = ((e.clientX - rect.left) / rect.width) * 100;
+        const y = ((e.clientY - rect.top) / rect.height) * 100;
+        btn.style.setProperty('--mouse-x', x + '%');
+        btn.style.setProperty('--mouse-y', y + '%');
+      });
+    });
+  }
+
   async function init() {
     await fetchExchangeRates();
     updateTicker();
     bindEvents();
     initWizard();
+    initCursorSpotlight();
+    initMagneticButtons();
+    initButtonShine();
 
     // Prepare scroll reveal (add class here so content stays visible if JS fails)
     document.querySelectorAll('.card, .panel, .hero-copy, .ticker').forEach((el) => el.classList.add('reveal'));
