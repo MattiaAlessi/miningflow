@@ -898,14 +898,77 @@ body {
 .planner-note {
   padding: 0 1.4rem 1rem;
   margin: 0;
-  color: var(--text2);
+  color: var(--text3);
   font-size: 0.82rem;
   line-height: 1.45;
 }
 
+.planner-summary {
+  margin: 0 1.4rem 1.2rem;
+  padding: 1rem 1.2rem;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, rgba(212, 175, 55, 0.06), rgba(212, 175, 55, 0.02));
+  border: 1px solid rgba(212, 175, 55, 0.12);
+  border-left: 3px solid var(--gold);
+}
+
+.planner-summary-text {
+  margin: 0;
+  color: var(--text2);
+  font-size: 0.85rem;
+  line-height: 1.65;
+}
+
+.planner-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin-top: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.planner-legend-item {
+  font-size: 0.75rem;
+  color: var(--text3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.legend-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.swatch-lock { background: linear-gradient(135deg, #525252, #737373); }
+.swatch-th15 { background: linear-gradient(135deg, var(--gold), var(--gold-light)); }
+.swatch-th12 { background: linear-gradient(135deg, #a1a1a1, #d1d1d1); }
+.swatch-eff  { background: linear-gradient(135deg, var(--green), #4ade80); }
+
+.alloc-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.78rem;
+  color: var(--text2);
+}
+
+.alloc-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
 .planner-allocation .allocation-labels {
   display: flex;
-  gap: 0.75rem;
+  gap: 0.5rem;
   flex-wrap: wrap;
   justify-content: space-between;
   margin-bottom: 0.5rem;
@@ -915,6 +978,7 @@ body {
 
 .planner-allocation .allocation-labels strong {
   color: var(--text1);
+  font-family: var(--mono);
 }
 
 .allocation-lock,
@@ -942,7 +1006,9 @@ body {
 }
 
 .planner-result.empty .planner-allocation,
-.planner-result.empty .planner-cards {
+.planner-result.empty .planner-cards,
+.planner-result.empty .planner-comparison,
+.planner-result.empty .planner-summary {
   filter: grayscale(0.8);
   pointer-events: none;
 }
@@ -954,21 +1020,21 @@ body {
 }
 
 .planner-allocation {
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
 }
 
 .allocation-labels {
   display: flex;
   justify-content: space-between;
   color: var(--text2);
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   margin-bottom: 0.5rem;
 }
 
 .allocation-labels strong {
   color: var(--text1);
   font-family: var(--mono);
-  margin-left: 0.25rem;
+  margin-left: 0.15rem;
 }
 
 .allocation-bar {
@@ -979,28 +1045,46 @@ body {
   background: rgba(255, 255, 255, 0.05);
 }
 
-.allocation-th {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, var(--gold), #ffcf5a);
-  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+/* Planner comparison — before vs after */
+.planner-comparison {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
 }
 
-.allocation-gmt {
-  display: block;
-  height: 100%;
-  background: linear-gradient(90deg, #525252, #737373);
-  transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+.planner-card.current {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.planner-card.current .planner-card-value {
+  color: var(--text2);
+}
+
+.planner-card.projected {
+  background: linear-gradient(135deg, rgba(245, 166, 35, 0.1), rgba(245, 166, 35, 0.02));
+  border-color: rgba(245, 166, 35, 0.2);
+}
+
+.planner-card.projected .planner-card-value {
+  color: var(--gold);
+  font-size: 1.35rem;
+}
+
+.planner-card.projected .planner-card-sub {
+  color: var(--green);
+  font-weight: 600;
 }
 
 .planner-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
 }
 
 .planner-card {
-  padding: 1rem;
+  padding: 0.9rem 0.8rem;
   border-radius: var(--radius-sm);
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid rgba(255, 255, 255, 0.05);
@@ -1021,25 +1105,25 @@ body {
 .planner-card-label {
   display: block;
   color: var(--text2);
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 0.35rem;
+  margin-bottom: 0.3rem;
 }
 
 .planner-card-value {
   display: block;
   font-family: var(--mono);
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--text1);
-  margin-bottom: 0.25rem;
+  margin-bottom: 0.2rem;
 }
 
 .planner-card-sub {
   display: block;
   color: var(--text3);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
 }
 
 .panel-badge {
@@ -1056,7 +1140,18 @@ body {
   vertical-align: middle;
 }
 
+.field-hint {
+  font-size: 0.7rem;
+  color: var(--text3);
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
 @media (max-width: 640px) {
+  .planner-comparison {
+    grid-template-columns: 1fr;
+  }
   .planner-cards {
     grid-template-columns: 1fr 1fr;
   }

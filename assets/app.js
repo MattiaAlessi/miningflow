@@ -655,14 +655,18 @@
     const targetMinerTH = parseFloat($('plTargetMinerTH').value) || 0;
 
     if (usdCash <= 0 && gmtBalance <= 0) {
-      setText('plResultTitle', 'Enter capital to see the optimal allocation step-by-step.');
+      setText('plResultTitle', 'Enter your cash or GMT to see the optimal investment split.');
+      $('plSummary')?.style.setProperty('display', 'none');
       $('plResult')?.classList.add('empty');
       return;
     }
 
     $('plResult')?.classList.remove('empty');
     const best = findOptimalAllocation({ usdCash, gmtBalance, targetMinerTH, avatarDisc: getAvatarDisc() });
-    if (!best) return;
+    if (!best) {
+      $('plSummary')?.style.setProperty('display', 'none');
+      return;
+    }
 
     const totalSpent = best.spent.lock + best.spent.th15 + best.spent.th12 + best.spent.eff;
     const pct = (val) => totalSpent > 0 ? (val / totalSpent * 100) : 0;
@@ -687,14 +691,69 @@
     setText('plFinalGMT', `Final: ${fmtNum(best.finalLockedGMT, 0)} GMT`);
     setText('plEffUp', fmtNum(best.upgradedEffTH, 1) + ' TH');
     setText('plFinalWth', `Final: ${best.finalWth.toFixed(2)} W/TH`);
-    setText('plMonthly', fmtUSD(best.finalMonthly));
+    setText('plProjectedMonthly', fmtUSD(best.finalMonthly));
+    setText('plCurrentMonthly', fmtUSD(best.baseMonthly));
     setText('plUplift', best.uplift <= 0 ? 'No uplift' : '+' + fmtUSD(best.uplift));
     setText('plNewTier', best.finalTier);
     setText('plNewDiscount', (best.finalDiscount * 100).toFixed(1) + '%');
+    setText('plTotalSpent', '$' + fmtNum(totalSpent, 0));
+
+    // Build plain-English summary
+    const summaryEl = $('plSummary');
+    const summaryTextEl = $('plSummaryText');
+    if (summaryEl && summaryTextEl) {
+      let lines = [];
+
+      // What to buy
+      const lockTH = best.lockedGMTAdd > 0.5;
+      const buyTH = best.addedTH15 + best.addedTH12 > 0.5;
+      const effUp = best.upgradedEffTH > 0.5;
+
+      if (lockTH && buyTH && effUp) {
+        lines.push(`Spread your capital across <strong>locking GMT</strong> (${pct(best.spent.lock).toFixed(0)}%), <strong>buying hashrate</strong> (${pct(best.spent.th15 + best.spent.th12).toFixed(0)}%), and <strong>upgrading efficiency</strong> (${pct(best.spent.eff).toFixed(0)}%).`);
+      } else if (lockTH && buyTH) {
+        lines.push(`Split between <strong>locking GMT</strong> (${pct(best.spent.lock).toFixed(0)}%) and <strong>buying hashrate</strong> (${pct(best.spent.th15 + best.spent.th12).toFixed(0)}%).`);
+      } else if (lockTH && effUp) {
+        lines.push(`Split between <strong>locking GMT</strong> (${pct(best.spent.lock).toFixed(0)}%) and <strong>upgrading efficiency</strong> (${pct(best.spent.eff).toFixed(0)}%).`);
+      } else if (buyTH && effUp) {
+        lines.push(`Split between <strong>buying hashrate</strong> (${pct(best.spent.th15 + best.spent.th12).toFixed(0)}%) and <strong>upgrading efficiency</strong> (${pct(best.spent.eff).toFixed(0)}%).`);
+      } else if (lockTH) {
+        lines.push(`Allocate <strong>all capital to locking GMT</strong> to boost your VIP tier and earn staking rewards.`);
+      } else if (buyTH) {
+        lines.push(`Allocate <strong>all capital to buying hashrate</strong> for the best monthly uplift.`);
+      } else if (effUp) {
+        lines.push(`Allocate <strong>all capital to upgrading efficiency</strong> to lower your power costs.`);
+      } else {
+        lines.push(`Hold cash — no allocation improves your income within the current limits.`);
+      }
+
+      // Specific amounts
+      if (best.lockedGMTAdd > 0.5) {
+        lines.push(`Lock <strong>${fmtNum(best.lockedGMTAdd, 0)} GMT</strong> (≈ ${fmtUSD(best.lockedGMTAdd * (state.gmtPrice || FALLBACK.gmtPrice))}) for fee discounts and staking.`);
+      }
+      if (best.addedTH15 + best.addedTH12 > 0.5) {
+        const thDetail = [];
+        if (best.addedTH15 > 0.5) thDetail.push(`${fmtNum(best.addedTH15, 1)} TH at 15 W/TH`);
+        if (best.addedTH12 > 0.5) thDetail.push(`${fmtNum(best.addedTH12, 1)} TH at 12 W/TH`);
+        lines.push(`Buy <strong>${thDetail.join(' + ')}</strong> hashrate.`);
+      }
+      if (best.upgradedEffTH > 0.5) {
+        lines.push(`Upgrade <strong>${fmtNum(best.upgradedEffTH, 1)} TH</strong> of your miner to 12 W/TH efficiency (final: ${best.finalWth.toFixed(2)} W/TH).`);
+      }
+
+      // Income summary (only if there's an actual uplift)
+      if (best.uplift > 0) {
+        const upliftPct = best.baseMonthly > 0 ? ((best.uplift / best.baseMonthly) * 100).toFixed(0) : '-';
+        lines.push(`Your monthly income goes from <strong>${fmtUSD(best.baseMonthly)} → ${fmtUSD(best.finalMonthly)}</strong> (${upliftPct === '-' ? '' : '+' + upliftPct + '%'} <span style="color:var(--green)">+${fmtUSD(best.uplift)}/mo</span>).`);
+      }
+
+      summaryTextEl.innerHTML = lines.join('<br>');
+      summaryEl.style.removeProperty('display');
+    }
 
     setText('plResultTitle', best.uplift <= 0
       ? 'Best move: hold cash — no allocation improves income within limits.'
-      : 'Optimal allocation for $' + fmtNum(totalSpent, 0));
+      : 'Optimal split of $' + fmtNum(totalSpent, 0));
   }
 
   // ---- API ----
