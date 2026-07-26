@@ -170,49 +170,9 @@ body {
   transform: translateY(0);
 }
 
-/* GSAP-driven animation initial states
-   The inline script in <head> adds .js-animations before first paint so the
-   default .reveal / .card transitions are replaced by GSAP. */
-/* GSAP animation targets: hide children, not the outer sections (hero/ticker stay visible). */
-.js-animations .reveal:not(.hero-copy):not(.ticker),
-.js-animations .card,
-.js-animations .ticker-row,
-.js-animations .hero-copy > *,
-.js-animations .footer {
-  opacity: 0;
-  transform: translateY(40px);
-  transition: none !important;
-  animation: none !important;
-}
-
-.js-animations .mesh-orb {
-  animation: none !important;
-}
-
-/* Keep above-the-fold section containers visible; only their children animate. */
-.js-animations .hero-copy.reveal,
-.js-animations .ticker.reveal {
-  opacity: 1;
-  transform: none;
-  transition: none;
-  animation: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .js-animations .reveal:not(.hero-copy):not(.ticker),
-  .js-animations .card,
-  .js-animations .ticker-row,
-  .js-animations .hero-copy > *,
-  .js-animations .footer {
-    opacity: 1;
-    transform: none;
-  }
-
-  .js-animations .mesh-orb {
-    opacity: 1;
-    transform: none;
-  }
-}
+/* GSAP-driven animation initial states — handled entirely in JS via gsap.set()
+   Elements are visible by default; GSAP hides + animates them only when loaded.
+   This avoids the bug where CSS opacity:0 + gsap.from() kept elements invisible. */
 
 /* Staggered reveal cards */
 .cards > .card.reveal:nth-child(1) { transition-delay: 0.02s; }

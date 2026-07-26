@@ -5,13 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script>
     (function () {
-      document.documentElement.classList.add('js-animations');
-      var t = setTimeout(function () {
-        if (!window._miningflowAnimationsLoaded) {
-          document.documentElement.classList.remove('js-animations');
-        }
-      }, 5000);
-      window._miningflowCancelAnimFallback = function () { clearTimeout(t); };
+      // GSAP will handle animations once loaded; elements are visible by default.
+      // No CSS hiding — see animations.js for the full animation flow.
     })();
   </script>
   <meta name="description" content="MiningFlow — Free GoMining profit calculator with live BTC & GMT data, VIP tiers, capital planner, growth projection, and daily breakdown.">
@@ -99,7 +94,7 @@
       <span class="brand-text">MiningFlow</span>
     </a>
     <div class="nav-links">
-      <a class="nav-link" href="claim/">Claim TH</a>
+      <a class="nav-link" href="claim/">Claim</a>
       <a class="nav-link" href="how-gomining-works.html">How it works</a>
       <a class="nav-link" href="guides.html">Guides</a>
       <a class="nav-link" href="faq.html">FAQ</a>
