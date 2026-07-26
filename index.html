@@ -129,6 +129,20 @@
               <span class="field-unit">GMT</span>
             </span>
           </label>
+          <label class="field">
+            <span class="field-label">GMT Wallet Balance</span>
+            <span class="field-wrap">
+              <input type="number" id="inGMTWallet" value="0" min="0" step="1" placeholder="0">
+              <span class="field-unit">GMT</span>
+            </span>
+          </label>
+          <label class="field">
+            <span class="field-label">GMT Staking APR</span>
+            <span class="field-wrap">
+              <input type="number" id="inLockAPR" value="18.69" min="0" step="0.01" placeholder="18.69">
+              <span class="field-unit">%</span>
+            </span>
+          </label>
         </div>
 
         <div class="toggles">
@@ -190,6 +204,33 @@
                 <span class="field-unit">TH</span>
               </span>
             </label>
+          </div>
+
+          <div class="marketplace-fields" style="margin-top:1rem; border-top:1px solid rgba(255,255,255,0.06); padding-top:1rem;">
+            <p class="panel-hint" style="margin:0 0 0.75rem 0;">Marketplace Miner — purchased off the GoMining marketplace. Its TH earns rewards &amp; pays fees but does NOT count toward VIP tier progress.</p>
+            <div class="field-group">
+              <label class="field">
+                <span class="field-label">Marketplace TH</span>
+                <span class="field-wrap">
+                  <input type="number" id="inMpTH" value="0" min="0" step="1" placeholder="0">
+                  <span class="field-unit">TH</span>
+                </span>
+              </label>
+              <label class="field">
+                <span class="field-label">Marketplace W/TH</span>
+                <span class="field-wrap">
+                  <input type="number" id="inMpWth" value="15" min="1" step="0.01" placeholder="15">
+                  <span class="field-unit">W/TH</span>
+                </span>
+              </label>
+              <label class="field">
+                <span class="field-label">Marketplace GMT cost</span>
+                <span class="field-wrap">
+                  <input type="number" id="inMpGMT" value="0" min="0" step="1" placeholder="0">
+                  <span class="field-unit">GMT</span>
+                </span>
+              </label>
+            </div>
           </div>
         </section>
 
@@ -565,6 +606,10 @@
           <div class="vip-stack-card">
             <span class="vip-stack-card-label">VIP Discount</span>
             <span class="vip-stack-card-value" id="outVipDisc">0.0%</span>
+          </div>
+          <div class="vip-stack-card">
+            <span class="vip-stack-card-label">Click Streak</span>
+            <span class="vip-stack-card-value" id="outStreakDisc">0.0%</span>
           </div>
           <div class="vip-stack-card">
             <span class="vip-stack-card-label">Token Discount</span>

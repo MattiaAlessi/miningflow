@@ -8,9 +8,10 @@
   const ELECTRICITY_RATE = 0.05; // $/kWh
   const SERVICE_RATE = 0.0089;   // $/TH/day
   const CONVERSION_FEE = 0.0225; // 2.25%
-  const GMT_STAKING_APR = 18.69; // %
+  const GMT_STAKING_APR_DEFAULT = 18.69; // % — sovrascrivibile dall'input inLockAPR
   const COV_DAYS_PER_PCT = 18;
   const MAX_TOKEN_DISCOUNT = 20;
+  const MAX_TOTAL_DISCOUNT = 30; // 20% token + 10% VIP/stack max
 
   // ---- TH COST TIERS (inspired by OLD_INSPIRATION) ----
   const TH_TIERS = [
@@ -32,7 +33,7 @@
   const EFF_BEST = 12;         // best available efficiency
   const EFF_BASE_MAX = 15;       // ≥15 W/TH priced as 15 for upgrades
   const USD_GMT_FEE = 0.02;    // 2% fee when deploying fiat into TH/GMT
-  const AMBASSADOR_RATE = 0.005; // 0.5% of referred TH revenue
+  const AMBASSADOR_RATE = 0.005; // 0.5% of referred TH revenue (⏺ OLD: usato 15 W/TH fisso per semplicità)
   const AVATAR_DISCOUNT = 0.95; // 5% off upgrades / new-machine creation
 
   const FALLBACK = {
@@ -233,99 +234,132 @@
     return EFF_UPGRADE_STEP * Math.max(0, Math.min(curW, EFF_BASE_MAX) - EFF_BEST) * (avatarDisc ? AVATAR_DISCOUNT : 1);
   }
 
-  function tokenDiscount(lockedGMT, gmtPrice, dailyGrossFee) {
-    if (dailyGrossFee <= 0) return 0;
-    const lockedUSD = lockedGMT * gmtPrice;
-    const daysCovered = lockedUSD / dailyGrossFee;
-    const pct = daysCovered / COV_DAYS_PER_PCT;
-    return Math.min(MAX_TOKEN_DISCOUNT, Math.max(0, pct));
+  // Token discount: allineato con OLD_INSPIRATION.
+  // GoMining concede lo sconto token in step del 1% basati su giorni di copertura.
+  // Ogni 18 giorni di commissioni coperte da GMT = 1% di sconto.
+  function tokenDiscount(totalGMT, gmtPrice, dailyFeeUSD) {
+    if (dailyFeeUSD <= 0) return 0;
+    const totalGMTUSD = totalGMT * gmtPrice;
+    const daysCovered = totalGMTUSD / dailyFeeUSD;
+    // Primo 1% solo dopo 18 giorni di copertura; ogni 18 giorni → +1%
+    return daysCovered < 18 ? 0 : Math.min(MAX_TOKEN_DISCOUNT, Math.floor(daysCovered / COV_DAYS_PER_PCT));
   }
 
-  // Stateless calculation used by both dashboard and planner
-  function calculateState({ th, wth, lockedGMT, streak = false, payGMT = false, discOverride = null, greedyInitial = 0, avatarDisc = false, ambassadorTH = 0 }) {
+  // Stateless calculation usata sia dalla dashboard che dal planner.
+  // Allineata con OLD_INSPIRATION per ordine calcolo sconto:
+  //   1. Sconti non-token (VIP + click streak + mining mode) → feesAfterNonTok
+  //   2. Token discount basato su copertura GMT delle feesAfterNonTok
+  //   3. Sconto pay-in-GMT (flat 8% su gross fees, feature miningflow)
+  function calculateState({ th, wth, lockedGMT, walletGMT = 0, streak = false, payGMT = false, discOverride = null, greedyInitial = 0, avatarDisc = false, ambassadorTH = 0, mpTH = 0, mpWth = 15, stakingAPR = null }) {
     const bp = state.btcPrice || FALLBACK.btcPrice;
     const gp = state.gmtPrice || FALLBACK.gmtPrice;
     const diff = state.difficulty || FALLBACK.difficulty;
-
     const dbt = dailyBTCperTH(diff);
-    const dailyRevBTC = dbt * th;
+
+    // Total hashrate = farm + marketplace miner
+    const farmTH = th;
+    const totTH = farmTH + Math.max(0, mpTH || 0);
+    const totWTH = totTH > 0
+      ? (farmTH * wth + Math.max(0, mpTH || 0) * Math.max(1, mpWth || 15)) / totTH
+      : wth;
+
+    const dailyRevBTC = dbt * totTH;
     const dailyRevUSD = dailyRevBTC * bp;
 
-    // Fees (pay-in-GMT gives a flat 8% reduction on gross fees)
-    const gmtFeeMult = payGMT ? 0.92 : 1;
-    const electricityFee = ((wth * th * 24 * ELECTRICITY_RATE) / 1000) * gmtFeeMult;
-    const serviceFee = SERVICE_RATE * th * gmtFeeMult;
+    // Gross fees on total hashrate
+    const electricityFee = (totWTH * totTH * 24 * ELECTRICITY_RATE) / 1000;
+    const serviceFee = SERVICE_RATE * totTH;
     const grossFeeUSD = electricityFee + serviceFee;
 
-    // Greedy Machine initial marketplace TH does not count toward VIP tier
-    const vipTh = Math.max(0, th - greedyInitial);
-    const vip = vipTier(vipTh, lockedGMT);
+    // === Calcolo sconto (allineato OLD_INSPIRATION) ===
+    // 1. Non-token discount stack: VIP + click streak
+    const vipTH = Math.max(0, farmTH - greedyInitial); // marketplace/greedy-initial NON conta per VIP
+    const vip = vipTier(vipTH, lockedGMT);
     const vipDisc = vip.d;
-    const tokDisc = tokenDiscount(lockedGMT, gp, grossFeeUSD);
-    let totalDiscount;
-    if (discOverride !== null && discOverride >= 0) {
-      totalDiscount = Math.min(MAX_TOKEN_DISCOUNT, discOverride) / 100;
-    } else {
-      totalDiscount = Math.min(MAX_TOKEN_DISCOUNT, vipDisc + tokDisc) / 100;
+    const streakDisc = streak ? 3 : 0; // Click streak = +3% sconto fee (non 0.5% sul netto)
+    const nonTokDisc = Math.min(MAX_TOTAL_DISCOUNT, vipDisc + streakDisc);
+
+    // 2. Fee dopo sconti non-token (base per calcolo copertura token)
+    const feesAfterNonTokUSD = grossFeeUSD * (1 - nonTokDisc / 100);
+
+    // 3. Token discount: solo se payGMT è attivo
+    let tokDisc = 0;
+    if (payGMT) {
+      const totalGMT = (lockedGMT || 0) + (walletGMT || 0); // locked + wallet contano per copertura
+      const feesGMT = feesAfterNonTokUSD > 0 ? feesAfterNonTokUSD / gp : 0;
+      tokDisc = tokenDiscount(totalGMT, gp, feesAfterNonTokUSD);
     }
 
-    const discountedFees = grossFeeUSD * (1 - totalDiscount);
+    // 4. Total discount
+    let totalDiscountPct;
+    if (discOverride !== null && discOverride >= 0) {
+      totalDiscountPct = Math.min(MAX_TOTAL_DISCOUNT, discOverride);
+    } else {
+      totalDiscountPct = Math.min(MAX_TOTAL_DISCOUNT, tokDisc + nonTokDisc);
+    }
+
+    // Pay-in-GMT dà un 8% flat di riduzione sulle gross fee (feature miningflow)
+    const gmtFeeMult = payGMT ? 0.92 : 1;
+    const grossWithPayGmt = grossFeeUSD * gmtFeeMult;
+    const discountedFees = grossWithPayGmt * (1 - totalDiscountPct / 100);
+
+    // Conversion fee: applicata al netto dopo fees
     const conversionFee = Math.max(0, dailyRevUSD - discountedFees) * CONVERSION_FEE;
 
     let dailyNetUSD = dailyRevUSD - discountedFees - conversionFee;
-    if (streak) dailyNetUSD *= 1.005; // approximates a 7-day login click-streak loyalty bonus
-
     const dailyNetBTC = bp > 0 ? dailyNetUSD / bp : 0;
 
-    // Staking on locked GMT
-    const stakingDailyUSD = lockedGMT * (GMT_STAKING_APR / 100) / 365 * gp;
+    // Staking su locked GMT (APR da input o default)
+    const apr = (stakingAPR != null && stakingAPR > 0) ? stakingAPR : GMT_STAKING_APR_DEFAULT;
+    const stakingDailyUSD = lockedGMT * (apr / 100) / 365 * gp;
 
-    // Ambassador reward from referred TH (USDT per day)
+    // Ambassador reward da referred TH
     const ambassadorDailyUSD = (ambassadorTH || 0) * dbt * bp * AMBASSADOR_RATE;
 
     const totalDailyUSD = dailyNetUSD + stakingDailyUSD + ambassadorDailyUSD;
     const totalMonthlyUSD = totalDailyUSD * 30;
 
     return {
-      th,
-      wth,
+      th: totTH,
+      wth: totWTH,
+      farmTH,
       lockedGMT,
-      bp,
-      gp,
-      dbt,
-      dailyRevBTC,
-      dailyRevUSD,
-      electricityFee,
-      serviceFee,
-      grossFeeUSD,
-      vip,
-      vipDisc,
+      walletGMT,
+      mpTH,
+      bp, gp, dbt,
+      dailyRevBTC, dailyRevUSD,
+      electricityFee, serviceFee, grossFeeUSD,
+      vip, vipDisc,
+      streakDisc,
       tokDisc,
-      totalDiscount,
+      nonTokDisc,
+      totalDiscount: totalDiscountPct / 100,
       discountedFees,
       conversionFee,
-      dailyNetUSD,
-      dailyNetBTC,
-      stakingDailyUSD,
-      ambassadorDailyUSD,
-      totalDailyUSD,
-      totalMonthlyUSD
+      dailyNetUSD, dailyNetBTC,
+      stakingDailyUSD, ambassadorDailyUSD,
+      totalDailyUSD, totalMonthlyUSD,
+      stakingAPR: apr
     };
   }
 
-  // Read dashboard inputs and compute
+  // Legge i campi della dashboard e calcola
   function calculate() {
     const discOverride = parseFloat($('inDiscOverride')?.value);
     return calculateState({
       th: parseFloat($('inTH').value) || 0,
       wth: parseFloat($('inWTH').value) || 0,
       lockedGMT: parseFloat($('inLocked').value) || 0,
+      walletGMT: parseFloat($('inGMTWallet')?.value) || 0,
       streak: $('inStreak').checked,
       payGMT: $('inPayGMT').checked,
       discOverride: isNaN(discOverride) ? null : discOverride,
       greedyInitial: getGreedyInitial(),
       avatarDisc: getAvatarDisc(),
-      ambassadorTH: getAmbassadorTH()
+      ambassadorTH: getAmbassadorTH(),
+      mpTH: parseFloat($('inMpTH')?.value) || 0,
+      mpWth: parseFloat($('inMpWth')?.value) || 15,
+      stakingAPR: parseFloat($('inLockAPR')?.value) || null
     });
   }
 
@@ -379,15 +413,24 @@
     const greedyInitial = getGreedyInitial();
     const ambassadorTH = getAmbassadorTH();
 
+    const walletGMT = parseFloat($('inGMTWallet')?.value) || 0;
+    const mpTH = parseFloat($('inMpTH')?.value) || 0;
+    const mpWth = parseFloat($('inMpWth')?.value) || 15;
+    const stakingAPR = parseFloat($('inLockAPR')?.value) || null;
+
     const resultOf = (st) => calculateState({
       th: st.th,
       wth: st.wth,
       lockedGMT: st.lockedGMT,
+      walletGMT,
       streak,
       payGMT,
       greedyInitial,
       avatarDisc,
-      ambassadorTH
+      ambassadorTH,
+      mpTH,
+      mpWth,
+      stakingAPR
     });
 
     const baseResult = resultOf(s);
@@ -582,15 +625,19 @@
     const th = parseFloat($('inTH').value) || 0;
     const wth = parseFloat($('inWTH').value) || 0;
     const locked = parseFloat($('inLocked').value) || 0;
+    const walletGMT = parseFloat($('inGMTWallet')?.value) || 0;
     const streak = $('inStreak')?.checked ?? false;
     const payGMT = $('inPayGMT')?.checked ?? false;
     const greedyInitial = getGreedyInitial();
     const avatarDisc = getAvatarDisc();
     const ambassadorTH = getAmbassadorTH();
+    const mpTH = parseFloat($('inMpTH')?.value) || 0;
+    const mpWth = parseFloat($('inMpWth')?.value) || 15;
+    const stakingAPR = parseFloat($('inLockAPR')?.value) || null;
 
     const discOverride = parseFloat($('inDiscOverride')?.value);
     const override = isNaN(discOverride) ? null : discOverride;
-    const common = { lockedGMT: locked, streak, payGMT, discOverride: override, greedyInitial, avatarDisc, ambassadorTH };
+    const common = { lockedGMT: locked, walletGMT, streak, payGMT, discOverride: override, greedyInitial, avatarDisc, ambassadorTH, mpTH, mpWth, stakingAPR };
     const base = calculateState({ th, wth, ...common });
     const invest = 1000;
     const gp = state.gmtPrice || FALLBACK.gmtPrice;
@@ -634,6 +681,11 @@
     setText('outTokenDisc', r.tokDisc.toFixed(1) + '%');
     setText('outTotalDisc', (r.totalDiscount * 100).toFixed(1) + '%');
     setText('outDiscOverrideStatus', overrideActive ? 'Override attivo' : 'Automatico');
+
+    // Show streak discount if active
+    if ($('outStreakDisc')) {
+      $('outStreakDisc').textContent = (r.streakDisc > 0 ? r.streakDisc.toFixed(1) : '0.0') + '%';
+    }
 
     const nextEl = $('outNextTier');
     if (nextEl) {
@@ -988,6 +1040,10 @@
     const initialCapital = base.th * estimateCPT(base.th, avatarDisc) + base.lockedGMT * gmtPrice;
     const greedyGrowth = getGreedyGrowth() / 100;
     const ambassadorTH = getAmbassadorTH();
+    const stakingAPR = parseFloat($('inLockAPR')?.value) || null;
+    const walletGMT = parseFloat($('inGMTWallet')?.value) || 0;
+    const mpTH = parseFloat($('inMpTH')?.value) || 0;
+    const mpWth = parseFloat($('inMpWth')?.value) || 15;
 
     let curTH = base.th;
     let curTotalW = base.th * base.wth;
@@ -1028,19 +1084,25 @@
         th: curTH,
         wth: curTH > 0 ? (curTotalW / curTH) : EFF_BASE_MAX,
         lockedGMT: curGMT,
+        walletGMT,
         streak: $('inStreak')?.checked,
         payGMT: $('inPayGMT')?.checked,
         greedyInitial: getGreedyInitial(),
-        avatarDisc
+        avatarDisc,
+        ambassadorTH,
+        mpTH,
+        mpWth,
+        stakingAPR
       });
 
       const dailyRevUSD = dailyBTCperTH * curTH * curBP;
       const conversionFee = Math.max(0, dailyRevUSD - sim.discountedFees) * CONVERSION_FEE;
+      // Streak è già incluso in sim.discountedFees tramite lo sconto non-token
       let dailyNetUSD = dailyRevUSD - sim.discountedFees - conversionFee;
-      if ($('inStreak')?.checked) dailyNetUSD *= 1.005;
 
-      const stakingDaily = (curGMT * (GMT_STAKING_APR / 100) / 365) * gmtPrice;
-      // Ambassador reward is kept outside calculateState in projections to avoid double-counting
+      // Staking usa APR da input
+      const stakingDaily = (curGMT * ((stakingAPR || GMT_STAKING_APR_DEFAULT) / 100) / 365) * gmtPrice;
+      // Ambassador reward
       const ambassadorDaily = ambassadorTH * dailyBTCperTH * curBP * AMBASSADOR_RATE;
       const monthProfit = (dailyNetUSD + stakingDaily + ambassadorDaily) * 30;
       cumProfit += monthProfit;
@@ -1052,7 +1114,6 @@
       if (reinvest && monthProfit > 0) {
         const thCost = estimateCPT(curTH, avatarDisc);
         const gmtPriceSafe = gmtPrice > 0 ? gmtPrice : FALLBACK.gmtPrice;
-        // 90% TH, 10% GMT keeps discount coverage growing; new TH modeled at 15 W/TH
         const thBought = (monthProfit * 0.9) / (thCost || 1);
         const gmtBought = (monthProfit * 0.1) / (gmtPriceSafe || 1);
         curTotalW += thBought * EFF_BASE_MAX;
@@ -1214,6 +1275,16 @@
     params.ambassador = ambassador ? '1' : '0';
     if (ambassador) params.refth = $('inReferredTH')?.value || '0';
 
+    // Nuovi campi
+    if ($('inGMTWallet')) params.gmtwallet = $('inGMTWallet').value;
+    if ($('inLockAPR')) params.lockapr = $('inLockAPR').value;
+    const mpTH = parseFloat($('inMpTH')?.value) || 0;
+    if (mpTH > 0) {
+      params.mpth = $('inMpTH').value;
+      params.mpwth = $('inMpWth')?.value || '15';
+      params.mpgmt = $('inMpGMT')?.value || '0';
+    }
+
     return new URLSearchParams(params);
   }
 
@@ -1224,6 +1295,8 @@
         th: parseFloat($('inTH').value) || 0,
         wth: parseFloat($('inWTH').value) || 0,
         locked: parseFloat($('inLocked').value) || 0,
+        walletGMT: parseFloat($('inGMTWallet')?.value) || 0,
+        stakingAPR: parseFloat($('inLockAPR')?.value) || 18.69,
         streak: $('inStreak').checked,
         payGMT: $('inPayGMT').checked,
         currency: state.currency,
@@ -1234,7 +1307,10 @@
         greedyGrowth: parseFloat($('inGreedyGrowth')?.value) || 0,
         avatarDisc: $('inAvatarDisc')?.checked ?? false,
         ambassador: $('inAmbassador')?.checked ?? false,
-        referredTH: parseFloat($('inReferredTH')?.value) || 0
+        referredTH: parseFloat($('inReferredTH')?.value) || 0,
+        mpTH: parseFloat($('inMpTH')?.value) || 0,
+        mpWth: parseFloat($('inMpWth')?.value) || 15,
+        mpGMT: parseFloat($('inMpGMT')?.value) || 0
       };
       localStorage.setItem('miningflow_setup', JSON.stringify(setup));
     } catch { /* ignore storage errors */ }
@@ -1250,6 +1326,8 @@
           if (setup.th !== undefined) $('inTH').value = setup.th;
           if (setup.wth !== undefined) $('inWTH').value = setup.wth;
           if (setup.locked !== undefined) $('inLocked').value = setup.locked;
+          if ($('inGMTWallet')) $('inGMTWallet').value = setup.walletGMT ?? 0;
+          if ($('inLockAPR')) $('inLockAPR').value = setup.stakingAPR ?? 18.69;
           if (setup.streak !== undefined) $('inStreak').checked = setup.streak;
           if (setup.payGMT !== undefined) $('inPayGMT').checked = setup.payGMT;
           if (setup.currency && $('inCurrency')) {
@@ -1266,6 +1344,9 @@
           if ($('inAvatarDisc')) $('inAvatarDisc').checked = !!setup.avatarDisc;
           if ($('inAmbassador')) $('inAmbassador').checked = !!setup.ambassador;
           if ($('inReferredTH')) $('inReferredTH').value = setup.referredTH ?? 0;
+          if ($('inMpTH')) $('inMpTH').value = setup.mpTH ?? 0;
+          if ($('inMpWth')) $('inMpWth').value = setup.mpWth ?? 15;
+          if ($('inMpGMT')) $('inMpGMT').value = setup.mpGMT ?? 0;
           updateAdvancedVisibility();
         }
       } catch { /* ignore parse errors */ }
@@ -1322,6 +1403,8 @@
       th: parseFloat($('inTH').value) || 0,
       wth: parseFloat($('inWTH').value) || 0,
       locked: parseFloat($('inLocked').value) || 0,
+      walletGMT: parseFloat($('inGMTWallet')?.value) || 0,
+      stakingAPR: parseFloat($('inLockAPR')?.value) || 18.69,
       streak: $('inStreak')?.checked ?? false,
       payGMT: $('inPayGMT')?.checked ?? false,
       currency: state.currency,
@@ -1332,7 +1415,10 @@
       greedyGrowth: parseFloat($('inGreedyGrowth')?.value) || 0,
       avatarDisc: $('inAvatarDisc')?.checked ?? false,
       ambassador: $('inAmbassador')?.checked ?? false,
-      referredTH: parseFloat($('inReferredTH')?.value) || 0
+      referredTH: parseFloat($('inReferredTH')?.value) || 0,
+      mpTH: parseFloat($('inMpTH')?.value) || 0,
+      mpWth: parseFloat($('inMpWth')?.value) || 15,
+      mpGMT: parseFloat($('inMpGMT')?.value) || 0
     };
   }
 
@@ -1375,6 +1461,8 @@
     $('inTH').value = p.th ?? 0;
     $('inWTH').value = p.wth ?? 0;
     $('inLocked').value = p.locked ?? 0;
+    if ($('inGMTWallet')) $('inGMTWallet').value = p.walletGMT ?? 0;
+    if ($('inLockAPR')) $('inLockAPR').value = p.stakingAPR ?? 18.69;
     $('inStreak').checked = p.streak ?? false;
     $('inPayGMT').checked = p.payGMT ?? false;
     state.currency = p.currency || 'USD';
@@ -1389,6 +1477,9 @@
     if ($('inAvatarDisc')) $('inAvatarDisc').checked = p.avatarDisc ?? false;
     if ($('inAmbassador')) $('inAmbassador').checked = p.ambassador ?? false;
     if ($('inReferredTH')) $('inReferredTH').value = p.referredTH ?? 0;
+    if ($('inMpTH')) $('inMpTH').value = p.mpTH ?? 0;
+    if ($('inMpWth')) $('inMpWth').value = p.mpWth ?? 15;
+    if ($('inMpGMT')) $('inMpGMT').value = p.mpGMT ?? 0;
     updateAdvancedVisibility();
     activeProfileName = name;
     updateProfileSelect();
@@ -1462,7 +1553,7 @@
         });
       }
     });
-    ['inGreedyTH', 'inGreedyInitial', 'inGreedyGrowth', 'inReferredTH'].forEach((id) => {
+    ['inGreedyTH', 'inGreedyInitial', 'inGreedyGrowth', 'inReferredTH', 'inGMTWallet', 'inLockAPR', 'inMpTH', 'inMpWth', 'inMpGMT'].forEach((id) => {
       const el = $(id);
       if (el) el.addEventListener('input', () => { render(); saveSetup(); saveCurrentProfile(); });
     });
@@ -2348,9 +2439,11 @@
   });
 
   // ---- Advanced TradingView charts ----
+  // TradingView symbols — corretto: GMT = GoMining Token (CRYPTO:GOMININGUSD),
+  // NON STEPN GMT (BINANCE:GMTUSDT). Allineato con OLD_INSPIRATION.
   const TV_SYMBOLS = {
     btc: 'BITSTAMP:BTCUSD',
-    gmt: 'BINANCE:GMTUSDT'
+    gmt: 'CRYPTO:GOMININGUSD'
   };
 
   function initTradingView(containerId, symbol) {

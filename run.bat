@@ -2,7 +2,7 @@
 REM MiningFlow v1.0 — one-click local server launcher
 
 set "PORT=8080"
-cd /d "%~dp0miningflow"
+cd /d "%~dp0"
 
 echo Starting MiningFlow server on http://localhost:%PORT% ...
 
