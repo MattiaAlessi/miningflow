@@ -120,6 +120,13 @@
               <span class="field-unit">W/TH</span>
             </span>
           </label>
+          <label class="field">
+            <span class="field-label">Efficiency Floor <span class="tip" data-tip="Best available efficiency for upgrades and new machines. GoMining's current floor is 15 W/TH; older models used 12 W/TH. The Capital Planner's efficient-miner cost model currently assumes 12 W/TH pricing.">?</span></span>
+            <span class="field-wrap">
+              <input type="number" id="inEffFloor" value="12" min="10" max="15" step="0.01" placeholder="12">
+              <span class="field-unit">W/TH</span>
+            </span>
+          </label>
         </div>
         <div class="field-group">
           <label class="field">
@@ -358,7 +365,7 @@
           <div class="allocation-bar" role="img" aria-label="Allocation split" id="plAllocationBar">
             <span class="allocation-lock" id="plBarLock" style="width:0%" title="Lock GMT"></span>
             <span class="allocation-th15" id="plBarTH15" style="width:0%" title="Standard TH (15 W/TH)"></span>
-            <span class="allocation-th12" id="plBarTH12" style="width:0%" title="Premium TH (12 W/TH)"></span>
+            <span class="allocation-th12" id="plBarTH12" style="width:0%" title="Premium TH (efficient miner)"></span>
             <span class="allocation-eff" id="plBarEff" style="width:0%" title="Upgrade Efficiency"></span>
           </div>
           <div class="allocation-labels">
@@ -547,7 +554,7 @@
             <button type="button" class="btn btn-small chart-shot" data-canvas="gmtChart" data-filename="miningflow-gmt-chart.png" data-title="GoMining Token (GMT) market history on MiningFlow">📷 Screenshot</button>
             <button type="button" class="btn btn-small chart-share" data-canvas="gmtChart" data-filename="miningflow-gmt-chart.png" data-title="GoMining Token (GMT) market history on MiningFlow">↗ Share</button>
           </div>
-        </div>“
+        </div>
       </div>
     </section>    <section class="panel reveal" id="advancedCharts">
       <div class="panel-head">

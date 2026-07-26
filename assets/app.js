@@ -28,9 +28,9 @@
     {th:384,cpt:18.88},{th:512,cpt:18.69},{th:768,cpt:18.51},{th:1024,cpt:18.32},
     {th:1536,cpt:18.14},{th:2560,cpt:17.96},{th:3584,cpt:17.78},{th:5000,cpt:17.60}
   ];
-  const MINER_CAP = 5000;      // TH per machine before a new 12W machine is required
+  const MINER_CAP = 5000;      // TH per machine before a new efficient machine is required
   const EFF_UPGRADE_STEP = 2.67; // $/TH per 1 W/TH efficiency improvement
-  const EFF_BEST = 12;         // best available efficiency
+  let EFF_BEST = 12;           // configurable best available efficiency (user input)
   const EFF_BASE_MAX = 15;       // ≥15 W/TH priced as 15 for upgrades
   const USD_GMT_FEE = 0.02;    // 2% fee when deploying fiat into TH/GMT
   const AMBASSADOR_RATE = 0.005; // 0.5% of referred TH revenue (⏺ OLD: usato 15 W/TH fisso per semplicità)
@@ -230,8 +230,12 @@
     return (lo + hi) / 2;
   }
 
+  function getEffBest() {
+    return parseFloat($('inEffFloor')?.value) || EFF_BEST;
+  }
+
   function effUpgradeCostPerTH(curW, avatarDisc = false) {
-    return EFF_UPGRADE_STEP * Math.max(0, Math.min(curW, EFF_BASE_MAX) - EFF_BEST) * (avatarDisc ? AVATAR_DISCOUNT : 1);
+    return EFF_UPGRADE_STEP * Math.max(0, Math.min(curW, EFF_BASE_MAX) - getEffBest()) * (avatarDisc ? AVATAR_DISCOUNT : 1);
   }
 
   // Token discount: allineato con OLD_INSPIRATION.
@@ -249,7 +253,7 @@
   // Allineata con OLD_INSPIRATION per ordine calcolo sconto:
   //   1. Sconti non-token (VIP + click streak + mining mode) → feesAfterNonTok
   //   2. Token discount basato su copertura GMT delle feesAfterNonTok
-  //   3. Sconto pay-in-GMT (flat 8% su gross fees, feature miningflow)
+  //   3. Nessuno sconto flat pay-in-GMT; il token discount già include l'effetto del pagamento in GMT.
   function calculateState({ th, wth, lockedGMT, walletGMT = 0, streak = false, payGMT = false, discOverride = null, greedyInitial = 0, avatarDisc = false, ambassadorTH = 0, mpTH = 0, mpWth = 15, stakingAPR = null }) {
     const bp = state.btcPrice || FALLBACK.btcPrice;
     const gp = state.gmtPrice || FALLBACK.gmtPrice;
@@ -298,10 +302,9 @@
       totalDiscountPct = Math.min(MAX_TOTAL_DISCOUNT, tokDisc + nonTokDisc);
     }
 
-    // Pay-in-GMT dà un 8% flat di riduzione sulle gross fee (feature miningflow)
-    const gmtFeeMult = payGMT ? 0.92 : 1;
-    const grossWithPayGmt = grossFeeUSD * gmtFeeMult;
-    const discountedFees = grossWithPayGmt * (1 - totalDiscountPct / 100);
+    // Token discount is already fully captured above; GoMining docs confirm there is
+    // no additional flat "pay-in-GMT" 8% reduction. discountedFees uses the stacked discount.
+    const discountedFees = grossFeeUSD * (1 - totalDiscountPct / 100);
 
     // Conversion fee: applicata al netto dopo fees
     const conversionFee = Math.max(0, dailyRevUSD - discountedFees) * CONVERSION_FEE;
@@ -333,6 +336,7 @@
       streakDisc,
       tokDisc,
       nonTokDisc,
+      feesAfterNonTokUSD,
       totalDiscount: totalDiscountPct / 100,
       discountedFees,
       conversionFee,
@@ -385,7 +389,7 @@
   // ---- Planner ----
   // Greedy marginal allocation inspired by OLD_INSPIRATION optimalSplit().
   // At each small step we evaluate four paths and pick the one with the highest
-  // monthly uplift: lock GMT, buy 15 W/TH upgrade, buy new 12 W/TH, upgrade efficiency.
+  // monthly uplift: lock GMT, buy 15 W/TH upgrade, buy new efficient miner, upgrade efficiency.
   function findOptimalAllocation({ usdCash = 0, gmtBalance = 0, targetMinerTH, avatarDisc = false }) {
     const base = calculate();
     const gp = state.gmtPrice || FALLBACK.gmtPrice;
@@ -403,7 +407,6 @@
     if (K <= 0) return null;
 
     const minerTH = Math.max(0, targetMinerTH || base.th);
-    const cptU = effUpgradeCostPerTH(base.wth, avatarDisc);
     const STEPS = 60;
     const incr = K / STEPS;
 
@@ -417,6 +420,7 @@
     const mpTH = parseFloat($('inMpTH')?.value) || 0;
     const mpWth = parseFloat($('inMpWth')?.value) || 15;
     const stakingAPR = parseFloat($('inLockAPR')?.value) || null;
+    const safeStakingAPR = (stakingAPR != null && stakingAPR > 0) ? stakingAPR : GMT_STAKING_APR_DEFAULT;
 
     const resultOf = (st) => calculateState({
       th: st.th,
@@ -436,17 +440,45 @@
     const baseResult = resultOf(s);
     let cur = baseResult;
 
+    // Helper: annualized ROI (percentage) from a monthly delta and capital step
+    const annualRoi = (deltaMo) => (deltaMo <= 0 ? -Infinity : (deltaMo * 12) / incr);
+
     for (let step = 0; step < STEPS; step++) {
       let bestROI = -Infinity;
       let winner = null;
       let winnerState = null;
       let winnerSpent = 0;
       let winnerKey = '';
+      const effBest = getEffBest();
+      const cptU = effUpgradeCostPerTH(s.wth, avatarDisc);
 
-      // 1) Lock GMT
+      // 1) Lock GMT — ROI-forward: value the next 1% token-discount step, plus staking yield
+      let lockROI = -Infinity;
       const lockSt = { ...s, lockedGMT: s.lockedGMT + incr / safeGp };
       const lockRes = resultOf(lockSt);
-      const lockROI = lockRes.totalMonthlyUSD - cur.totalMonthlyUSD;
+      const curTok = cur.tokDisc;
+      if (curTok >= MAX_TOKEN_DISCOUNT) {
+        lockROI = annualRoi(lockRes.totalMonthlyUSD - cur.totalMonthlyUSD);
+      } else if (payGMT) {
+        const targetCovDays = (curTok + 1) * COV_DAYS_PER_PCT;
+        const dailyFeeAfterNonTokUSD = cur.feesAfterNonTokUSD / 30;
+        const targetCoverageUSD = targetCovDays * dailyFeeAfterNonTokUSD;
+        const currentCoverageUSD = (cur.lockedGMT + cur.walletGMT) * safeGp;
+        const needUSD = Math.max(0, targetCoverageUSD - currentCoverageUSD);
+        // Only assume the next 1% token-discount step if this incremental investment
+        // can actually reach it; otherwise value only the incremental staking/VIP lift.
+        if (needUSD <= incr) {
+          const lockCapitalUSD = needUSD;
+          const stepSaveMonthly = cur.grossFeeUSD * 0.01; // 1% fee reduction
+          const annualReturn = stepSaveMonthly * 12 + lockCapitalUSD * (safeStakingAPR / 100);
+          lockROI = lockCapitalUSD > 0 ? (annualReturn / lockCapitalUSD) : -Infinity;
+        } else {
+          lockROI = annualRoi(lockRes.totalMonthlyUSD - cur.totalMonthlyUSD);
+        }
+      } else {
+        // payGMT off: token discount is not applied, value only incremental staking/VIP lift
+        lockROI = annualRoi(lockRes.totalMonthlyUSD - cur.totalMonthlyUSD);
+      }
       if (lockROI > bestROI) {
         bestROI = lockROI;
         winner = lockSt;
@@ -463,7 +495,7 @@
           const newWth = (s.th * s.wth + dth * EFF_BASE_MAX) / newTH;
           const th15St = { ...s, th: newTH, wth: newWth, th15: s.th15 + dth };
           const th15Res = resultOf(th15St);
-          const th15ROI = th15Res.totalMonthlyUSD - cur.totalMonthlyUSD;
+          const th15ROI = annualRoi(th15Res.totalMonthlyUSD - cur.totalMonthlyUSD);
           if (th15ROI > bestROI) {
             bestROI = th15ROI;
             winner = th15St;
@@ -473,14 +505,14 @@
         }
       }
 
-      // 3) Buy new 12 W/TH miner
+      // 3) Buy new efficient miner
       const dth12 = thForBudgetTiers(incr, TH_TIERS_12W, avatarDisc);
       if (dth12 > 0.01) {
         const newTH = s.th + dth12;
-        const newWth = (s.th * s.wth + dth12 * EFF_BEST) / newTH;
+        const newWth = (s.th * s.wth + dth12 * effBest) / newTH;
         const th12St = { ...s, th: newTH, wth: newWth, th12: s.th12 + dth12 };
         const th12Res = resultOf(th12St);
-        const th12ROI = th12Res.totalMonthlyUSD - cur.totalMonthlyUSD;
+        const th12ROI = annualRoi(th12Res.totalMonthlyUSD - cur.totalMonthlyUSD);
         if (th12ROI > bestROI) {
           bestROI = th12ROI;
           winner = th12St;
@@ -489,15 +521,14 @@
         }
       }
 
-      // 4) Upgrade efficiency of the target miner toward 12 W/TH
-      if (cptU > 0 && s.th > 0 && s.effTH < minerTH - 0.01) {
+      // 4) Upgrade efficiency of the target miner toward the configured floor
+      if (cptU > 0 && s.th > 0 && s.wth > effBest + 0.5 && s.effTH < minerTH - 0.01) {
         const effDth = Math.min(minerTH - s.effTH, incr / cptU);
         if (effDth > 0.01) {
-          // Reduce the farm's average W/TH by upgrading effDth TH from current W/TH to EFF_BEST
-          const newWth = (s.th * s.wth - effDth * (s.wth - EFF_BEST)) / s.th;
-          const effSt = { ...s, wth: Math.max(EFF_BEST, newWth), effTH: s.effTH + effDth };
+          const newWth = (s.th * s.wth - effDth * (s.wth - effBest)) / s.th;
+          const effSt = { ...s, wth: Math.max(effBest, newWth), effTH: s.effTH + effDth };
           const effRes = resultOf(effSt);
-          const effROI = effRes.totalMonthlyUSD - cur.totalMonthlyUSD;
+          const effROI = annualRoi(effRes.totalMonthlyUSD - cur.totalMonthlyUSD);
           if (effROI > bestROI) {
             bestROI = effROI;
             winner = effSt;
@@ -862,7 +893,7 @@
       if (best.addedTH15 + best.addedTH12 > 0.5) {
         const thDetail = [];
         if (best.addedTH15 > 0.5) thDetail.push(`${fmtNum(best.addedTH15, 1)} TH @ 15 W/TH`);
-        if (best.addedTH12 > 0.5) thDetail.push(`${fmtNum(best.addedTH12, 1)} TH @ 12 W/TH`);
+        if (best.addedTH12 > 0.5) thDetail.push(`${fmtNum(best.addedTH12, 1)} TH @ ${getEffBest()} W/TH`);
         lines.push(`Buy <strong>${thDetail.join(' + ')}</strong>`);
       }
       if (best.upgradedEffTH > 0.5) {
@@ -1499,7 +1530,8 @@
         referredTH: parseFloat($('inReferredTH')?.value) || 0,
         mpTH: parseFloat($('inMpTH')?.value) || 0,
         mpWth: parseFloat($('inMpWth')?.value) || 15,
-        mpGMT: parseFloat($('inMpGMT')?.value) || 0
+        mpGMT: parseFloat($('inMpGMT')?.value) || 0,
+        effFloor: parseFloat($('inEffFloor')?.value) || 12
       };
       localStorage.setItem('miningflow_setup', JSON.stringify(setup));
     } catch { /* ignore storage errors */ }
@@ -1536,6 +1568,7 @@
           if ($('inMpTH')) $('inMpTH').value = setup.mpTH ?? 0;
           if ($('inMpWth')) $('inMpWth').value = setup.mpWth ?? 15;
           if ($('inMpGMT')) $('inMpGMT').value = setup.mpGMT ?? 0;
+          if ($('inEffFloor')) $('inEffFloor').value = setup.effFloor ?? 12;
           updateAdvancedVisibility();
         }
       } catch { /* ignore parse errors */ }
@@ -1712,7 +1745,7 @@
       });
     }
 
-    ['inTH', 'inWTH', 'inLocked'].forEach((id) => {
+    ['inTH', 'inWTH', 'inLocked', 'inEffFloor'].forEach((id) => {
       const el = $(id);
       if (el) el.addEventListener('input', () => { render(); saveSetup(); saveCurrentProfile(); });
     });
