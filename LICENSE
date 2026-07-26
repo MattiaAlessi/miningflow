@@ -1,17 +1,43 @@
-MIT License
+MiningFlow Attribution + Donation License (MADL)
 
-Copyright (c) 2026 MiningFlow
+Copyright (c) 2026 MiningFlow (https://mattiaalessi.github.io/miningflow/)
 
+TERMS AND CONDITIONS
+
+1. PERMISSION
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+of this software and associated documentation files (the "Software"), to use,
+copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, subject to the following conditions.
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+2. MANDATORY ATTRIBUTION
+Any use of the Software, in whole or in part, whether modified or unmodified,
+MUST include the following credit in a clearly visible location within the
+user interface or documentation of any derived work or application:
 
+    "Powered by MiningFlow — https://github.com/MattiaAlessi/miningflow/"
+
+3. MANDATORY DONATION CONTACTS
+Any use of the Software, in whole or in part, whether modified or unmodified,
+MUST display the following donation addresses in a clearly visible location:
+
+    Bitcoin (BTC): bc1qcqycagy7p0tf4vc682ygdq522jee0cterllcv6
+    Ethereum / GMT: 0x0a6415FcBf54A46C4b21851493a0B387e8c23c94
+
+These addresses must remain visible, editable only by the end-user, and not
+obscured, removed, or relocated to hidden pages.
+
+4. REFERRAL CODE
+When deploying or distributing a derived work related to GoMining, the
+referral code ZG54KF1 (https://gomining.com/?ref=ZG54KF1) should be
+presented as an option to new users.
+
+5. DERIVATIVE WORKS
+Derivative works and modifications are permitted provided they comply with
+sections 2, 3, and 4 above. The original copyright notice and this license
+must be included in all copies or substantial portions of the Software.
+
+6. DISCLAIMER
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
