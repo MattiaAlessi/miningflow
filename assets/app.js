@@ -1038,6 +1038,7 @@
     const gmtPrice = base.gp || FALLBACK.gmtPrice;
     const avatarDisc = getAvatarDisc();
     const initialCapital = base.th * estimateCPT(base.th, avatarDisc) + base.lockedGMT * gmtPrice;
+    const initialMonthly = base.totalMonthlyUSD;
     const greedyGrowth = getGreedyGrowth() / 100;
     const ambassadorTH = getAmbassadorTH();
     const stakingAPR = parseFloat($('inLockAPR')?.value) || null;
@@ -1050,8 +1051,12 @@
     let curGMT = base.lockedGMT;
     let diffMult = 1;
     let cumProfit = 0;
+    let totalInvested = initialCapital;
     let breakEvenMonth = -1;
     const monthlyData = [];
+    // Track yearly snapshots for the table
+    const yearlyData = [];
+    let lastYearlyCum = 0;
     const date = new Date();
     const halvingYears = [2028, 2032, 2036, 2040];
     const WEEKS_PER_MONTH = 30.44 / 7;
@@ -1097,17 +1102,14 @@
 
       const dailyRevUSD = dailyBTCperTH * curTH * curBP;
       const conversionFee = Math.max(0, dailyRevUSD - sim.discountedFees) * CONVERSION_FEE;
-      // Streak è già incluso in sim.discountedFees tramite lo sconto non-token
       let dailyNetUSD = dailyRevUSD - sim.discountedFees - conversionFee;
 
-      // Staking usa APR da input
       const stakingDaily = (curGMT * ((stakingAPR || GMT_STAKING_APR_DEFAULT) / 100) / 365) * gmtPrice;
-      // Ambassador reward
       const ambassadorDaily = ambassadorTH * dailyBTCperTH * curBP * AMBASSADOR_RATE;
       const monthProfit = (dailyNetUSD + stakingDaily + ambassadorDaily) * 30;
       cumProfit += monthProfit;
 
-      if (breakEvenMonth === -1 && cumProfit >= initialCapital && initialCapital > 0) {
+      if (breakEvenMonth === -1 && cumProfit >= totalInvested && totalInvested > 0) {
         breakEvenMonth = m;
       }
 
@@ -1119,6 +1121,7 @@
         curTotalW += thBought * EFF_BASE_MAX;
         curTH += thBought;
         curGMT += gmtBought;
+        totalInvested += monthProfit; // reinvested profits increase cost basis
       }
 
       monthlyData.push({
@@ -1127,9 +1130,42 @@
         cumProfit,
         isHalving: halvingYears.includes(date.getFullYear()) && date.getMonth() === 3
       });
+
+      // Yearly snapshot at the end of each year
+      if (m % 12 === 0) {
+        const yearNum = m / 12;
+        yearlyData.push({
+          year: yearNum,
+          monthlyIncome: monthProfit,
+          hashrate: curTH,
+          cumProfit,
+          yearProfit: cumProfit - lastYearlyCum,
+          isHalving: halvingYears.includes(date.getFullYear())
+        });
+        lastYearlyCum = cumProfit;
+      }
     }
 
-    return { monthlyData, breakEvenMonth, initialCapital };
+    // Compute IRR (simplified annualized return)
+    const yearsElapsed = years;
+    const finalValue = cumProfit;
+    const irr = yearsElapsed > 0 && totalInvested > 0
+      ? (Math.pow(finalValue / totalInvested, 1 / yearsElapsed) - 1) * 100
+      : 0;
+    const returnMultiple = totalInvested > 0 ? (finalValue / totalInvested) : 0;
+
+    return {
+      monthlyData,
+      yearlyData,
+      breakEvenMonth,
+      initialCapital,
+      initialMonthly,
+      finalMonthly: monthlyData.length > 0 ? monthlyData[monthlyData.length - 1].income : 0,
+      finalCumulative: cumProfit,
+      irr,
+      returnMultiple,
+      totalInvested
+    };
   }
 
   function drawProjChart(data) {
@@ -1137,8 +1173,9 @@
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
-    const w = canvas.parentElement.clientWidth;
-    const h = 200;
+    const parent = canvas.parentElement;
+    const w = parent.clientWidth;
+    const h = 260;
     canvas.style.width = w + 'px';
     canvas.style.height = h + 'px';
     canvas.width = Math.floor(w * dpr);
@@ -1149,35 +1186,111 @@
 
     const maxInc = Math.max(...data.map((d) => d.income), 10);
     const maxCum = Math.max(...data.map((d) => d.cumProfit), 10);
-    const barW = Math.max(2, (w / data.length) - 2);
+    const barW = Math.max(2, (w / data.length) - 1.5);
 
-    // Halving markers
+    // Padding for axis labels
+    const padL = 48, padR = 8, padT = 8, padB = 28;
+    const plotL = padL, plotR = w - padR, plotT = padT, plotB = h - padB;
+    const plotW = plotR - plotL, plotH = plotB - plotT;
+
+    const months = data.length;
+    const totalYears = months / 12;
+
+    // Vertical gridlines (year markers)
+    ctx.font = '10px ' + (getComputedStyle(document.body).getPropertyValue('--mono') || 'monospace');
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let y = 0; y <= Math.ceil(totalYears); y++) {
+      const mi = Math.min(y * 12, months - 1);
+      const x = plotL + (mi / (months - 1)) * plotW;
+      if (y > 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([3, 4]);
+        ctx.beginPath();
+        ctx.moveTo(x, plotT);
+        ctx.lineTo(x, plotB);
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.fillText('Y' + (y + 1), x, plotB + 6);
+    }
+
+    // Horizontal gridlines (income/cumulative)
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    const ySteps = 4;
+    for (let i = 0; i <= ySteps; i++) {
+      const pct = i / ySteps;
+      const yPos = plotT + plotH * (1 - pct);
+      ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(plotL, yPos);
+      ctx.lineTo(plotR, yPos);
+      ctx.stroke();
+      // Income axis label
+      const val = maxInc * pct;
+      ctx.fillStyle = 'rgba(78,207,250,0.5)';
+      ctx.font = '9px ' + (getComputedStyle(document.body).getPropertyValue('--mono') || 'monospace');
+      ctx.fillText(fmtNum(Math.round(val), 0), plotL - 4, yPos);
+    }
+
+    // === Halving markers (full-height bands) ===
     data.forEach((d, i) => {
       if (d.isHalving) {
-        const x = (i / (data.length - 1)) * (w - barW) + barW / 2;
-        ctx.fillStyle = 'rgba(245, 166, 35, 0.15)';
-        ctx.fillRect(x - 1, 0, 2, h);
+        const x = plotL + (i / (months - 1)) * plotW;
+        ctx.strokeStyle = 'rgba(245,166,35,0.25)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(x, plotT);
+        ctx.lineTo(x, plotB);
+        ctx.stroke();
+        // Label above
+        ctx.fillStyle = 'rgba(245,166,35,0.5)';
+        ctx.font = 'bold 8px ' + (getComputedStyle(document.body).getPropertyValue('--sans') || 'sans-serif');
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText('⌗', x, plotT - 2);
       }
     });
 
-    // Income bars
+    // === Income bars ===
     data.forEach((d, i) => {
-      const x = (i / (data.length - 1)) * (w - barW);
-      const barH = (Math.max(0, d.income) / maxInc) * h * 0.75;
-      ctx.fillStyle = 'rgba(78, 207, 250, 0.6)';
-      ctx.fillRect(x, h - barH, barW, barH);
+      const x = plotL + (i / (months - 1)) * plotW - barW / 2;
+      const barH = Math.max(0, (Math.max(0, d.income) / maxInc) * plotH);
+      ctx.fillStyle = 'rgba(78, 207, 250, 0.5)';
+      ctx.fillRect(x, plotB - barH, barW, barH);
     });
 
-    // Cumulative profit line
+    // === Cumulative profit line ===
     ctx.beginPath();
     ctx.strokeStyle = '#8b5cf6';
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = 'rgba(139,92,246,0.2)';
+    ctx.shadowBlur = 6;
     data.forEach((d, i) => {
-      const x = (i / (data.length - 1)) * (w - barW) + barW / 2;
-      const y = h - (Math.max(0, d.cumProfit) / maxCum) * h * 0.9;
+      const x = plotL + (i / (months - 1)) * plotW;
+      const y = plotB - (Math.max(0, d.cumProfit) / Math.max(maxCum, 1)) * plotH;
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // Final dot on cumulative line
+    const lastIdx = data.length - 1;
+    const fx = plotL + (lastIdx / (months - 1)) * plotW;
+    const fy = plotB - (Math.max(0, data[lastIdx].cumProfit) / Math.max(maxCum, 1)) * plotH;
+    ctx.fillStyle = '#8b5cf6';
+    ctx.beginPath();
+    ctx.arc(fx, fy, 4, 0, 7);
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 3, 0, 7);
     ctx.stroke();
   }
 
@@ -1187,15 +1300,91 @@
     const reinvest = $('pjReinvest')?.checked || false;
     const useDiff = $('pjDiffGrowth')?.checked ?? true;
 
+    // Update range labels
+    const yearsEl = $('pjYearsVal');
+    if (yearsEl) yearsEl.textContent = years + ' yr' + (years > 1 ? 's' : '');
+    const btcEl = $('pjBtcGrowthVal');
+    if (btcEl) btcEl.textContent = (btcGrowth >= 0 ? '+' : '') + btcGrowth + '%';
+
     const result = projectGrowth({ years, btcGrowth, reinvest, useDiff });
     if (!result || !result.monthlyData.length) return;
 
     drawProjChart(result.monthlyData);
 
-    const last = result.monthlyData[result.monthlyData.length - 1];
-    setText('pjResultBE', result.breakEvenMonth > 0 ? `Month ${result.breakEvenMonth}` : 'Never');
-    setText('pjResultCum', fmtUSD(last.cumProfit));
-    setText('pjResultFinalInc', fmtUSD(last.income) + '/mo');
+    // Key metrics
+    const beMonth = result.breakEvenMonth;
+    const beStr = beMonth > 0
+      ? (beMonth <= 12 ? 'Year 1' : 'Year ' + Math.ceil(beMonth / 12)) + ' (mo ' + beMonth + ')'
+      : 'Not reached';
+    setText('pjResultBE', beStr);
+    setText('pjResultCum', fmtUSD(result.finalCumulative, 0));
+    setText('pjResultFinalInc', fmtUSD(result.finalMonthly, 0) + '/mo');
+    setText('pjResultStartInc', 'from ' + fmtUSD(result.initialMonthly, 0) + '/mo today');
+
+    // Return multiple
+    const multEl = $('pjResultMultiple');
+    if (multEl) {
+      const mult = result.returnMultiple;
+      multEl.textContent = mult >= 1
+        ? (mult).toFixed(1) + 'x return'
+        : 'Below breakeven';
+    }
+
+    // IRR
+    const irrEl = $('pjResultIRR');
+    if (irrEl) {
+      irrEl.textContent = isFinite(result.irr) && result.irr !== 0
+        ? result.irr.toFixed(1) + '%'
+        : '—';
+    }
+
+    // Halving timeline bar
+    renderProjHalvingBar(result.monthlyData, years);
+
+    // Yearly table
+    if (result.yearlyData && result.yearlyData.length > 0) {
+      renderProjTable(result);
+    }
+  }
+
+  function renderProjHalvingBar(monthlyData, years) {
+    const bar = $('projHalvingBar');
+    if (!bar) return;
+    const halvingMonths = [];
+    monthlyData.forEach((d, i) => {
+      if (d.isHalving) {
+        const pct = ((i + 1) / (years * 12)) * 100;
+        halvingMonths.push({ month: i + 1, pct });
+      }
+    });
+    if (halvingMonths.length === 0) {
+      bar.style.display = 'none';
+      return;
+    }
+    bar.style.display = 'flex';
+    bar.innerHTML = '<span class="phb-label">Halvings:</span> ' +
+      halvingMonths.map(h =>
+        `<span class="phb-dot" style="left:${h.pct}%" title="Halving ~month ${h.month}"></span>`
+      ).join('') +
+      '<span class="phb-track"></span>';
+  }
+
+  function renderProjTable(result) {
+    const wrap = $('projTableWrap');
+    const tbody = $('projTableBody');
+    if (!wrap || !tbody) return;
+    wrap.style.display = '';
+    const rows = result.yearlyData.map(d => {
+      const halvingIcon = d.isHalving ? '⌗' : '';
+      return `<tr>
+        <td>Year ${d.year}</td>
+        <td>${fmtUSD(d.monthlyIncome, 0)}</td>
+        <td>${fmtNum(d.hashrate, 1)} TH</td>
+        <td>${fmtUSD(d.cumProfit, 0)}</td>
+        <td>${halvingIcon}</td>
+      </tr>`;
+    }).join('');
+    tbody.innerHTML = rows;
   }
 
   // ---- Interactions ----
@@ -1618,6 +1807,16 @@
     ['pjReinvest', 'pjDiffGrowth'].forEach((id) => {
       const el = $(id);
       if (el) el.addEventListener('change', renderProjection);
+    });
+
+    // Projection table toggle
+    $('projTableToggle')?.addEventListener('click', () => {
+      const wrap = $('projTableWrap');
+      const btn = $('projTableToggle');
+      if (!wrap || !btn) return;
+      const isVisible = wrap.style.display !== 'none';
+      wrap.style.display = isVisible ? 'none' : '';
+      btn.textContent = isVisible ? '📋 Show yearly breakdown' : '📋 Hide yearly breakdown';
     });
     let resizeTimer;
     window.addEventListener('resize', () => {
@@ -2422,9 +2621,112 @@
     }
   }
 
+  // ---- Export full projection report as image ----
+  let _html2canvasPromise = null;
+
+  function loadHtml2canvas() {
+    if (_html2canvasPromise) return _html2canvasPromise;
+    if (window.html2canvas) {
+      _html2canvasPromise = Promise.resolve(window.html2canvas);
+      return _html2canvasPromise;
+    }
+    _html2canvasPromise = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js';
+      s.async = true;
+      s.onload = () => resolve(window.html2canvas);
+      s.onerror = () => reject(new Error('html2canvas failed to load'));
+      document.head.appendChild(s);
+    });
+    return _html2canvasPromise;
+  }
+
+  async function exportProjReport() {
+    const resultsEl = document.querySelector('#projection .proj-results');
+    if (!resultsEl) { showToast('No projection results to export.'); return; }
+
+    const btn = $('exportProjReport');
+    const origText = btn ? btn.textContent : '';
+    if (btn) { btn.textContent = 'Capturing…'; btn.disabled = true; }
+
+    try {
+      const html2canvas = await loadHtml2canvas();
+      const canvas = await html2canvas(resultsEl, {
+        backgroundColor: '#0a0a0a',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        allowTaint: false,
+        width: Math.min(resultsEl.scrollWidth, 1400),
+        height: resultsEl.scrollHeight
+      });
+      const dataURL = canvas.toDataURL('image/png');
+      downloadDataURL(dataURL, 'miningflow-projection-report.png');
+      showToast('Report downloaded as PNG');
+    } catch (err) {
+      console.warn('Export failed, falling back to chart-only export.', err);
+      // Fallback: just export the chart canvas
+      try {
+        const dataURL = getCanvasDataURL('projChart');
+        downloadDataURL(dataURL, 'miningflow-projection.png');
+        showToast('Chart screenshot downloaded');
+      } catch (e2) {
+        showToast('Could not export report');
+      }
+    } finally {
+      if (btn) { btn.textContent = origText; btn.disabled = false; }
+    }
+  }
+
+  let _printTimerId = null;
+
+  function printProjReport() {
+    const panel = document.getElementById('projection');
+    if (!panel) return;
+
+    // Cancel any pending print cleanup
+    if (_printTimerId) {
+      clearTimeout(_printTimerId);
+      _printTimerId = null;
+    }
+
+    // Temporarily expand the yearly table for print
+    const tableWrap = $('projTableWrap');
+    const tableToggle = $('projTableToggle');
+    const wasHidden = tableWrap && tableWrap.style.display === 'none';
+    if (wasHidden && tableWrap) tableWrap.style.display = '';
+    // Save state so cleanup can restore it
+    const prevWasHidden = wasHidden;
+
+    // Add a print-specific class to the body
+    document.body.classList.add('printing-report');
+
+    // Trigger browser print dialog
+    window.print();
+
+    // Cleanup after print (browser may block for a bit)
+    _printTimerId = setTimeout(() => {
+      document.body.classList.remove('printing-report');
+      if (prevWasHidden && tableWrap) tableWrap.style.display = 'none';
+      _printTimerId = null;
+    }, 500);
+  }
+
   document.addEventListener('click', (e) => {
     const shareBtn = e.target.closest('.chart-share');
     const shotBtn = e.target.closest('.chart-shot');
+    const exportBtn = e.target.closest('#exportProjReport');
+    const printBtn = e.target.closest('#printProjReport');
+    if (exportBtn) {
+      e.preventDefault();
+      exportProjReport();
+      return;
+    }
+    if (printBtn) {
+      e.preventDefault();
+      printProjReport();
+      return;
+    }
     if (shareBtn) {
       const canvasId = shareBtn.dataset.canvas;
       const filename = shareBtn.dataset.filename || 'miningflow-chart.png';

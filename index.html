@@ -402,58 +402,117 @@
 
     <section class="panel" id="projection">
       <div class="panel-head">
-        <h2 class="panel-title">Growth Projection <span class="panel-badge">v1.2</span></h2>
-        <span class="panel-hint">Multi-year forecast</span>
+        <h2 class="panel-title">Growth Projection <span class="panel-badge">Enhanced</span></h2>
+        <span class="panel-hint">Multi-year forecast with halving events</span>
       </div>
+
+      <!-- Controls -->
       <form class="form" id="projForm" novalidate>
-        <div class="field-group">
-          <label class="field">
-            <span class="field-label">Projection Years</span>
-            <span class="field-wrap">
-              <input type="number" id="pjYears" value="3" min="1" max="10" step="1">
-            </span>
-          </label>
-          <label class="field">
-            <span class="field-label">BTC Annual Growth</span>
-            <span class="field-wrap">
-              <input type="number" id="pjBtcGrowth" value="0" step="1">
-              <span class="field-unit">%</span>
-            </span>
-          </label>
-        </div>
-        <div class="toggles">
-          <label class="toggle" title="Reinvest monthly income into more TH & GMT">
-            <input type="checkbox" id="pjReinvest">
-            <span class="toggle-slider" aria-hidden="true"></span>
-            <span class="toggle-label">Reinvest Income</span>
-          </label>
-          <label class="toggle" title="Apply baseline difficulty growth to per-TH rewards">
-            <input type="checkbox" id="pjDiffGrowth" checked>
-            <span class="toggle-slider" aria-hidden="true"></span>
-            <span class="toggle-label">Difficulty Growth</span>
-          </label>
+        <div class="proj-controls-row">
+          <div class="field-group proj-inputs-group">
+            <label class="field">
+              <span class="field-label">📅 Years to forecast</span>
+              <span class="field-wrap">
+                <input type="range" id="pjYears" min="1" max="15" step="1" value="5">
+                <span class="field-range-val" id="pjYearsVal">5 yrs</span>
+              </span>
+            </label>
+            <label class="field">
+              <span class="field-label">📈 BTC annual appreciation</span>
+              <span class="field-wrap">
+                <input type="range" id="pjBtcGrowth" min="-20" max="50" step="1" value="5">
+                <span class="field-range-val" id="pjBtcGrowthVal">+5%</span>
+              </span>
+            </label>
+          </div>
+          <div class="proj-toggles-group">
+            <label class="toggle proj-toggle" title="Automatically reinvest monthly income into more hashrate & GMT">
+              <input type="checkbox" id="pjReinvest">
+              <span class="toggle-slider" aria-hidden="true"></span>
+              <span class="toggle-label"><strong>Reinvest</strong> <span class="toggle-desc">compound growth</span></span>
+            </label>
+            <label class="toggle proj-toggle" title="Simulate realistic difficulty growth over time">
+              <input type="checkbox" id="pjDiffGrowth" checked>
+              <span class="toggle-slider" aria-hidden="true"></span>
+              <span class="toggle-label"><strong>Difficulty</strong> <span class="toggle-desc">rising over time</span></span>
+            </label>
+          </div>
         </div>
       </form>
+
+      <!-- Results -->
       <div class="proj-results">
-        <canvas id="projChart" height="200"></canvas>
-        <div class="chart-actions">
-          <button type="button" class="btn btn-small chart-shot" data-canvas="projChart" data-filename="miningflow-projection.png" data-title="Growth Projection on MiningFlow">📷 Screenshot</button>
-          <button type="button" class="btn btn-small chart-share" data-canvas="projChart" data-filename="miningflow-projection.png" data-title="Growth Projection on MiningFlow">↗ Share</button>
+        <!-- Key metrics dashboard -->
+        <div class="proj-metrics">
+          <div class="proj-metric-card proj-metric-primary">
+            <span class="proj-metric-icon">💰</span>
+            <div class="proj-metric-body">
+              <span class="proj-metric-label">Total Net Value</span>
+              <span class="proj-metric-value" id="pjResultCum">$0</span>
+              <span class="proj-metric-sub" id="pjResultMultiple">—</span>
+            </div>
+          </div>
+          <div class="proj-metric-card">
+            <span class="proj-metric-icon">⏱️</span>
+            <div class="proj-metric-body">
+              <span class="proj-metric-label">Break-Even</span>
+              <span class="proj-metric-value" id="pjResultBE">—</span>
+              <span class="proj-metric-sub">to recover your investment</span>
+            </div>
+          </div>
+          <div class="proj-metric-card">
+            <span class="proj-metric-icon">📊</span>
+            <div class="proj-metric-body">
+              <span class="proj-metric-label">Annualized Return (IRR)</span>
+              <span class="proj-metric-value" id="pjResultIRR">—</span>
+              <span class="proj-metric-sub">ROI per year</span>
+            </div>
+          </div>
+          <div class="proj-metric-card">
+            <span class="proj-metric-icon">📅</span>
+            <div class="proj-metric-body">
+              <span class="proj-metric-label">Final Monthly Income</span>
+              <span class="proj-metric-value" id="pjResultFinalInc">$0</span>
+              <span class="proj-metric-sub" id="pjResultStartInc">from $0/mo today</span>
+            </div>
+          </div>
         </div>
-        <div class="proj-summary">
-          <div class="proj-summary-card">
-            <span class="proj-summary-label">Break-Even</span>
-            <span class="proj-summary-val" id="pjResultBE">-</span>
+
+        <!-- Halving timeline bar -->
+        <div class="proj-halving-bar" id="projHalvingBar"></div>
+
+        <!-- Chart -->
+        <div class="proj-chart-area">
+          <div class="proj-chart-legend" id="projChartLegend">
+            <span class="proj-legend-item"><span class="proj-legend-swatch" style="background:#4ecffa"></span> Monthly Income</span>
+            <span class="proj-legend-item"><span class="proj-legend-swatch" style="background:#8b5cf6"></span> Cumulative Profit</span>
+            <span class="proj-legend-item"><span class="proj-legend-swatch" style="background:rgba(245,166,35,0.3)"></span> Halving Event</span>
           </div>
-          <div class="proj-summary-card">
-            <span class="proj-summary-label">Cum. Net Value</span>
-            <span class="proj-summary-val" id="pjResultCum">$0.00</span>
-          </div>
-          <div class="proj-summary-card">
-            <span class="proj-summary-label">Final Monthly</span>
-            <span class="proj-summary-val" id="pjResultFinalInc">$0.00</span>
+          <canvas id="projChart" height="260"></canvas>
+          <div class="chart-actions">
+            <button type="button" class="btn btn-small chart-shot" data-canvas="projChart" data-filename="miningflow-projection.png" data-title="Growth Projection on MiningFlow">📷 Screenshot</button>
+            <button type="button" class="btn btn-small chart-share" data-canvas="projChart" data-filename="miningflow-projection.png" data-title="Growth Projection on MiningFlow">↗ Share</button>
+            <button type="button" class="btn btn-small btn-export-report" id="exportProjReport">📄 Export Report</button>
+            <button type="button" class="btn btn-small btn-print-report" id="printProjReport">🖨️ Print</button>
           </div>
         </div>
+
+        <!-- Year-by-year breakdown table -->
+        <div class="proj-table-wrap" id="projTableWrap" style="display:none">
+          <table class="proj-table" id="projTable">
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Monthly Income</th>
+                <th>Hashrate</th>
+                <th>Cumulative</th>
+                <th>Halving</th>
+              </tr>
+            </thead>
+            <tbody id="projTableBody"></tbody>
+          </table>
+        </div>
+        <button type="button" class="btn btn-small proj-table-toggle" id="projTableToggle">📋 Show yearly breakdown</button>
       </div>
     </section>
 
